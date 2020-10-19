@@ -1,6 +1,19 @@
-function [paramVals,paramNames,scores] = analzyeParamSlices(basedir,modelDir,subdir)
+function [paramVals,paramNames,scores] = analyzeParamSlices(basedir,modelDir,subdir)
 [paramVals,paramNames,scores] = getParamVals(basedir,modelDir,subdir);
+[~,inds] = sort(scores);
 info = load([basedir '/' modelDir '/' subdir '/' modelDir '.mat']); info=info.(modelDir);
+actionSeqs = load(['~/phd/lever_task/processed_data/' subdir '_ActionSequences.mat']); actionSeqs=actionSeqs.ActionSequences;
+allActions = [];
+for i=1:length(actionSeqs)
+    allActions = [allActions actionSeqs{i}];
+end
+if (any(strfind(modelDir,'RM')))
+    randScore = 0;
+elseif (any(strfind(modelDir,'PC')))
+    randScore = objective_score(ones(1,length(allActions))*.5);
+else
+    error('modelDir not recognized')
+end
 npts = 2000;
 [~,minInd] = min(scores);
 for i=1:length(paramNames)
@@ -17,11 +30,12 @@ for i=1:length(paramNames)
             [Xq,Yq] = meshgrid(xrange,yrange);
             Vq = F(Xq,Yq);
             figure;
-            imagesc([xmin xmax],[ymin ymax],Vq); colormap(jet); colorbar(); caxis([floor(min(scores)) ceil(max(scores))])
+            imagesc([xmin xmax],[ymin ymax],Vq); colormap(jet); colorbar(); caxis([floor(min(scores)) ceil(randScore)])
             set(gca,'ydir','normal')
             xlabel(paramNames{i}); ylabel(paramNames{j})
             hold on; plot(paramVals(:,i),paramVals(:,j),'.k','markersize',10)
             plot(paramVals(minInd,i),paramVals(minInd,j),'r*','markersize',20)
+            scatter(paramVals(inds(1:100),i),paramVals(inds(1:100),j))
         end
     end
 end
