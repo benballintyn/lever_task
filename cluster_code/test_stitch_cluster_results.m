@@ -1,0 +1,2 @@
+% test_stitch_cluster_results
+stitch_cluster_results('simple_rl/results/cluster_results/bandit_egreedy_largeSweep_mouseTrialStatistics_ansUtilityFunc_pressTimeFunc','alpha',.05:.05:1,'epsilon',.01:.01:.2,'ans_sigma',.05:.05:.5)

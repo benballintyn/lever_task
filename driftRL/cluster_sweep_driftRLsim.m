@@ -1,4 +1,4 @@
-function [] = cluster_sweep_simpleRLsim(curRunID,agentType,actionSelectionMethod,utilityFunc1,utilityFunc2,initializationMethod,datadir,batchNumber)
+function [] = cluster_sweep_driftRLsim(curRunID,agentType,actionSelectionMethod,utilityFunc1,utilityFunc2,initializationMethod,datadir,batchNumber)
 [status,SYSTEM_NAME] = system('hostname');
 if (~status)
     switch strtrim(SYSTEM_NAME)
@@ -32,6 +32,8 @@ gammas     = .05:.05:1;
 epsilons   = .01:.01:.2;
 temps      = .005:.005:.1;
 ans_sigmas = .05:.05:1;
+drift_rates = .005:.005:.05;
+noise_amplitudes = .05:.05:1;
 
 % set agentParams based on curRunID and variable ranges
 switch agentType
@@ -145,6 +147,8 @@ performanceEoR = cell(1,4); % Fraction of max EoR values
 performanceRoE = cell(1,4);
 nL = cell(1,4); % # of choices of PR side for each timestep
 nS = cell(1,4); % # of choices of SR side for each timestep
+nSaborted = cell(1,4);
+nLaborted = cell(1,4);
 pL = cell(1,4); % P(PR) for each timestep. computed from nL and nS
 pS = cell(1,4); % P(SR) for each timestep. computed from nL and nS
 numLR = cell(1,4); % Total # of PR trials
@@ -166,12 +170,14 @@ for s=1:4
     nL{s} = zeros(1,1000);
     for nt=1:length(mouseTrialNums{s})
         % 100 specifies the number of agents to run
-        [curnumSR,curnumLR,curnS,curnL,RoEoptimalities,EoRoptimalities] = ...
-                    simpleRLsim(sessType,mouseTrialNums{s}(nt),agentType,100,...
-                    actionSelectionMethod,agentParams,'utilityFunc1',uf1,'utilityFunc2',uf2,...
+        [curnumSR,curnumLR,curnS,curnL,RoEoptimalities,EoRoptimalities,curnSaborted,curnLaborted] = ...
+                    driftRLsim(sessType,mouseTrialNums{s}(nt),agentType,100,...
+                    actionSelectionMethod,agentParams,driftParams,'utilityFunc1',uf1,'utilityFunc2',uf2,...
                     'initializationMethod',initializationMethod);
         nS{s} = nS{s} + curnS;
         nL{s} = nL{s} + curnL;
+        nSaborted{s} = nSaborted{s} + curnSaborted;
+        nLaborted{s} = nLaborted{s} + curnLaborted;
         numSR{s} = [numSR{s} curnumSR];
         numLR{s} = [numLR{s} curnumLR];
         performanceEoR{s} = [performanceEoR{s} EoRoptimalities];

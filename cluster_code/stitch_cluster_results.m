@@ -34,6 +34,7 @@ for i=1:nFolders
         sweepParams.actionSelectionMethod = curRunParams.actionSelectionMethod;
         sweepParams.utilityFunc1 = curRunParams.utilityFunc1;
         sweepParams.utilityFunc2 = curRunParams.utilityFunc2;
+        sweepParams.initializationMethod = curRunParams.initializationMethod;
     else
         if (~strcmp(sweepParams.agentType,curRunParams.agentType))
             error(['agentType from ' folders(i).name ' does not match that from ' folders(1).name])
@@ -55,14 +56,19 @@ for i=1:nFolders
         var_val(j) = agentParams.(var_names{j});
         cellInds(j) = find(var_ranges{j} == var_val(j));
     end
-    tmpperformanceEoR = load([datadir '/' folders(i).name '/performanceEoR.mat']); tmpperformanceEoR=tmpperformanceEoR.performanceEoR;
-    tmpperformanceRoE = load([datadir '/' folders(i).name '/performanceRoE.mat']); tmpperformanceRoE=tmpperformanceRoE.performanceRoE;
-    tmpnL = load([datadir '/' folders(i).name '/nL.mat']); tmpnL=tmpnL.nL;
-    tmpnS = load([datadir '/' folders(i).name '/nS.mat']); tmpnS=tmpnS.nS;
-    tmppL = load([datadir '/' folders(i).name '/pL.mat']); tmppL=tmppL.pL;
-    tmppS = load([datadir '/' folders(i).name '/pS.mat']); tmppS=tmppS.pS;
-    tmpnumLR = load([datadir '/' folders(i).name '/numLR.mat']); tmpnumLR=tmpnumLR.numLR;
-    tmpnumSR = load([datadir '/' folders(i).name '/numSR.mat']); tmpnumSR=tmpnumSR.numSR;
+    try
+        tmpperformanceEoR = load([datadir '/' folders(i).name '/performanceEoR.mat']); tmpperformanceEoR=tmpperformanceEoR.performanceEoR;
+        tmpperformanceRoE = load([datadir '/' folders(i).name '/performanceRoE.mat']); tmpperformanceRoE=tmpperformanceRoE.performanceRoE;
+        tmpnL = load([datadir '/' folders(i).name '/nL.mat']); tmpnL=tmpnL.nL;
+        tmpnS = load([datadir '/' folders(i).name '/nS.mat']); tmpnS=tmpnS.nS;
+        tmppL = load([datadir '/' folders(i).name '/pL.mat']); tmppL=tmppL.pL;
+        tmppS = load([datadir '/' folders(i).name '/pS.mat']); tmppS=tmppS.pS;
+        tmpnumLR = load([datadir '/' folders(i).name '/numLR.mat']); tmpnumLR=tmpnumLR.numLR;
+        tmpnumSR = load([datadir '/' folders(i).name '/numSR.mat']); tmpnumSR=tmpnumSR.numSR;
+    catch
+        warning(['Folder ' num2str(i) ' is missing results. Rerunning...'])
+        cluster_sweep_simpleRLsim(i,curRunParams.agentType,curRunParams.actionSelectionMethod,curRunParams.utilityFunc1,curRunParams.utilityFunc2,curRunParams.initializationMethod,datadir,1);
+    end
     for j=1:4
         linearIndex = sub2ind_cell(nL,[cellInds j]);
         performanceEoR{linearIndex} = tmpperformanceEoR{j};
@@ -74,22 +80,26 @@ for i=1:nFolders
         numLR{linearIndex} = tmpnumLR{j};
         numSR{linearIndex} = tmpnumSR{j};
     end
-    if (mod(i,1000) == 0)
+    if (mod(i,100) == 0)
         timeElapsed = toc(startTime);
         speed = timeElapsed/i;
         timeRemaining_mins = speed*(nFolders - i)/60;
         disp(['Done with first ' num2str(i) ' folders. ~' num2str(timeRemaining_mins) ' minutes remaining'])
     end
 end
-save([datadir '/performanceEoR.mat'],'performanceEoR','-mat')
-save([datadir '/performanceRoE.mat'],'performanceRoE','-mat')
-save([datadir '/nL.mat'],'nL','-mat')
-save([datadir '/nS.mat'],'nS','-mat')
-save([datadir '/pL.mat'],'pL','-mat')
-save([datadir '/pS.mat'],'pS','-mat')
-save([datadir '/numLR.mat'],'numLR','-mat')
-save([datadir '/numSR.mat'],'numSR','-mat')
-save([datadir '/params.mat'],'params','-mat')
-save([datadir '/sweepParams.mat'],'sweepParams','-mat')
+savedir = [datadir '_analyzed'];
+if (~exist(savedir,'dir'))
+    mkdir(savedir)
+end
+save([savedir '/performanceEoR.mat'],'performanceEoR','-mat')
+save([savedir '/performanceRoE.mat'],'performanceRoE','-mat')
+save([savedir '/nL.mat'],'nL','-mat')
+save([savedir '/nS.mat'],'nS','-mat')
+save([savedir '/pL.mat'],'pL','-mat')
+save([savedir '/pS.mat'],'pS','-mat')
+save([savedir '/numLR.mat'],'numLR','-mat')
+save([savedir '/numSR.mat'],'numSR','-mat')
+save([savedir '/params.mat'],'params','-mat')
+save([savedir '/sweepParams.mat'],'sweepParams','-mat')
 end
 

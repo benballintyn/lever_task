@@ -1,4 +1,5 @@
-function [numSR,numLR,nS,nL,RoEoptimalities,EoRoptimalities] = simpleRLsim(sessionType,nTrials,agentType,nAgents,actionSelectionMethod,agentParams,varargin)
+function [numSR,numLR,nS,nL,RoEoptimalities,EoRoptimalities,nSaborted,nLaborted,numAborted] = ...
+    driftRLsim(sessionType,nTrials,agentType,nAgents,actionSelectionMethod,agentParams,driftParams,varargin)
 RoE_NL_optimal = [70.875 286.875 448.875 1798.875]; % lever presses
 EoR_NL_optimal = [10 22 28 58]; % trials
 f_NL = @(N) .5*(sqrt(8*N+9)-3); % f(lever presses) = trials
@@ -57,8 +58,11 @@ utilityFunc2 = p.Results.utilityFunc2;
 initializationMethod = p.Results.initializationMethod;
 numSR = [];
 numLR = [];
-nS = zeros(1,1000);
-nL = zeros(1,1000);
+numAborted = [];
+nS = zeros(1,nTrials);
+nL = zeros(1,nTrials);
+nSaborted = zeros(1,nTrials);
+nLaborted = zeros(1,nTrials);
 for i=1:nAgents
     switch initializationMethod
         case 'random'
@@ -76,10 +80,10 @@ for i=1:nAgents
     end
     Pl = 2; % initialize PR side lever press cost
     nPresses = 0;
+    nAborted = 0;
     rewards = zeros(1,nTrials);
     actions = zeros(1,nTrials);
     presses = zeros(1,nTrials);
-    curLRtrial = 0;
     utilityFuncValsSR = utilityFunc1(ones(1,nTrials)*Ps);
     utilityFuncValsPR = utilityFunc1(1:(nTrials+1));
     for j=1:length(utilityFuncValsSR)
@@ -104,17 +108,36 @@ for i=1:nAgents
         % rewards r are the per-trial EoR (ratio of reward
         % to cost)
         if (action == 1) % if chose action 1 (SR side)
-            r = SR/denomsSR(t); %SR/utilityFunc2(utilityFuncValsSR(t));
-            rewards(t) = SR;
-            nPresses = nPresses + Ps;
+            [trajectory,hitBound,abortInd] = driftProcess(driftParams.drift_rate,driftParams.noise_amplitude,Ps);
+            if (~hitBound)
+                r = SR/denomsSR(t); %SR/utilityFunc2(utilityFuncValsSR(t));
+                rewards(t) = SR;
+                nPresses = nPresses + Ps;
+                presses(t) = Ps;
+            else
+                r = abortInd*leverPressCost;
+                rewards(t) = 0;
+                nPresses = nPresses + abortInd;
+                presses(t) = abortInd;
+                nSaborted(t) = nSaborted(t) + 1;
+                nAborted = nAborted + 1;
+            end
             nS(t) = nS(t) + 1;
-            presses(t) = Ps;
         else % if chose action 2 (PR side)
-            curLRtrial = curLRtrial+1;
-            r = LR/denomsPR(Pl); %LR/utilityFunc2(utilityFuncValsPR(Pl));
-            rewards(t) = LR;
-            nPresses = nPresses + Pl;
-            presses(t) = Pl;
+            [trajectory,hitBound,abortInd] = driftProcess(driftParams.drift_rate,driftParams.noise_amplitude,Pl);
+            if (~hitBound)
+                r = LR/denomsPR(Pl); %LR/utilityFunc2(utilityFuncValsPR(Pl));
+                rewards(t) = LR;
+                nPresses = nPresses + Pl;
+                presses(t) = Pl;
+            else
+                r = abortInd*leverPressCost;
+                rewards(t) = 0;
+                nPresses = nPresses + abortInd;
+                presses(t) = abortInd;
+                nLaborted(t) = nLaborted(t) + 1;
+                nAborted = nAborted + 1;
+            end
             Pl = Pl + 1; % increment the PR side press cost
             nL(t) = nL(t) + 1;
         end
@@ -127,6 +150,7 @@ for i=1:nAgents
                 error('agentType not recognized. How did you get here?')
         end
     end
+    numAborted = [numAborted nAborted];
     curNumSR = sum(actions == 1);
     curNumLR = sum(actions == 2);
     numSR = [numSR curNumSR];

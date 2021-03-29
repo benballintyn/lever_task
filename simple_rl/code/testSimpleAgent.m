@@ -10,6 +10,7 @@ addRequired(p,'actionSelectionMethod',@ischar) % currently: 'e_greedy' or 'softm
 addRequired(p,'agentParams',@isstruct) % contains the parameters of the agent (alpha,gamma,epsilon/temp)
 addParameter(p,'utilityFunc1',@(x) x,isaFunc) % optional utility function to pass lever presses through
 addParameter(p,'utilityFunc2',@(x) x,isaFunc) % optional utility function to pass the results of utilityFunc1 through
+addParameter(p,'initialization','random',@ischar)
 parse(p,sessionType,nTrials,agentType,actionSelectionMethod,agentParams,varargin{:})
 
 nTrials = p.Results.nTrials;
@@ -51,9 +52,15 @@ switch sessionType
     case '5xFR12' % 5xFR12
         SR = 3; LR = 15; Ps = 12; sessInd = 4;
 end
-
-Q = zeros(nTrials,2); Q(1,:) = rand(1,2); % initialize a 2-element Q table with uniform random values (0,1)
 Pl = 2; % initialize PR side lever press cost
+switch p.Results.initialization
+    case 'random'
+        Q = zeros(nTrials,2); Q(1,:) = rand(1,2); % initialize a 2-element Q table with uniform random values (0,1)
+    case 'trained'
+        Q = zeros(nTrials,2); Q(1,1) = SR/Ps; Q(1,2) = LR/Pl;
+    case 'mean_reward'
+        Q = zeros(nTrials,2); Q(1,1) = mean([SR/Ps LR/Pl]); Q(1,2) = mean([SR/Ps LR/Pl]);
+end
 nPresses = 0;
 rewards = zeros(1,nTrials);
 actions = zeros(1,nTrials);
