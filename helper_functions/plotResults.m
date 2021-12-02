@@ -6,7 +6,18 @@ addParameter(p,'single_dir',false,@islogical)
 addParameter(p,'fitStatsOnly',false,@islogical)
 addParameter(p,'fitMethod','logprob_joint',@ischar)
 addParameter(p,'Only120Trials',false,@islogical)
+addParameter(p,'histograms_only',false,@islogical)
 parse(p,datadir,top_k,varargin{:})
+
+NUM_LR_VALS = 0:.01:100;
+NUM_ABORTED_VALS = 0:1:60;
+PERFORMANCE_EOR_VALS = 0:.01:1;
+PERCENT_COMPLETED_PR_VALS = 0:.01:1;
+
+NUM_LR_BANDWIDTH = 5;
+NUM_ABORTED_BANDWIDTH = 5;
+PERFORMANCE_EOR_BANDWIDTH = .05;
+PERCENT_COMPLETED_PR_BANDWIDTH = .05;
 
 if (p.Results.Only120Trials)
     mouseDataDir = '~/phd/lever_task/analysis_120_trials';
@@ -33,28 +44,48 @@ if (p.Results.single_dir)
     for i=1:16
         subplot(4,4,i)
         if (i <= 4)
-            histogram(NL_observed{i},'normalization','pdf','binwidth',2);
+            histogram(NL_observed{i},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
             hold on;
-            histogram(numLR{i},'normalization','pdf','binwidth',2);
+            if (p.Results.histograms_only)
+                histogram(numLR{i},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+            else
+                [F,xi,bw] = ksdensity(numLR{i},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
+                plot(xi,F,'LineWidth',2)
+            end
             xlabel('# of completed PR trials','FontSize',15,'FontWeight','bold')
             title([sessionTypes{i}])
         elseif (i > 4 & i <= 8)
             curInd = i - 4;
-            histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2);
+            histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
             hold on;
-            histogram(numAborted{curInd},'normalization','pdf','binwidth',2);
+            if (p.Results.histograms_only)
+                histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+            else
+                [F,xi,bw] = ksdensity(numAborted{curInd},'Bandwidth',NUM_ABORTED_BANDWIDTH);
+                plot(xi,F,'LineWidth',2)
+            end
             xlabel('# of trials aborted','FontSize',15,'FontWeight','bold')
         elseif (i > 8 & i <= 12)
             curInd = i - 8;
-            histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02);
+            histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
             hold on;
-            histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02);
+            if (p.Results.histograms_only)
+                histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+            else
+                [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
+                plot(xi,F,'LineWidth',2)
+            end
             xlabel('EoR optimality','FontSize',15,'FontWeight','bold')
         else
             curInd = i - 12;
-            histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02)
+            histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
             hold on;
-            histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02)
+            if (p.Results.histograms_only)
+                histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+            else
+                [F,xi,bw] = ksdensity(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),PERCENT_COMPLETED_PR_VALS,'Bandwidth',PERCENT_COMPLETED_PR_BANDWIDTH);
+                plot(xi,F,'LineWidth',2)
+            end
             xlabel('% of PR trial completed','FontSize',15,'FontWeight','bold')
         end
     end
@@ -93,22 +124,37 @@ else
                 for j=1:12
                     subplot(3,4,j)
                     if (j <= 4)
-                        histogram(NL_observed{j},'normalization','pdf','binwidth',2);
+                        histogram(NL_observed{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
                         hold on;
-                        histogram(numLR{j},'normalization','pdf','binwidth',2);
+                        if (p.Results.histograms_only)
+                            histogram(numLR{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        else
+                            [F,xi,bw] = ksdensity(numLR{j},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
+                            plot(xi,F,'LineWidth',2)
+                        end
                         xlabel('# of completed PR trials','FontSize',15,'FontWeight','bold')
                         title([sessionTypes{j}])
                     elseif (j > 4 & j <= 8)
                         curInd = j - 4;
-                        histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2);
+                        histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
                         hold on;
-                        histogram(numAborted{curInd},'normalization','pdf','binwidth',2);
+                        if (p.Results.histograms_only)
+                            histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        else
+                            [F,xi,bw] = ksdensity(numAborted{curInd},NUM_ABORTED_VALS,'Bandwidth',NUM_ABORTED_BANDWIDTH);
+                            plot(xi,F,'LineWidth',2)
+                        end
                         xlabel('# of trials aborted','FontSize',15,'FontWeight','bold')
                     else
                         curInd = j - 8;
-                        histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02);
+                        histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
                         hold on;
-                        histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02);
+                        if (p.Results.histograms_only)
+                            histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                        else
+                            [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
+                            plot(xi,F,'LineWidth',2)
+                        end
                         xlabel('EoR optimality','FontSize',15,'FontWeight','bold')
                     end
                 end
@@ -119,28 +165,48 @@ else
                 for j=1:16
                     subplot(4,4,j)
                     if (j <= 4)
-                        histogram(NL_observed{j},'normalization','pdf','binwidth',2);
+                        histogram(NL_observed{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
                         hold on;
-                        histogram(numLR{j},'normalization','pdf','binwidth',2);
+                        if (p.Results.histograms_only)
+                            histogram(numLR{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        else
+                            [F,xi,bw] = ksdensity(numLR{j},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
+                            plot(xi,F,'LineWidth',2)
+                        end
                         xlabel('# of completed PR trials','FontSize',15,'FontWeight','bold')
                         title([sessionTypes{j}])
                     elseif (j > 4 & j <= 8)
                         curInd = j - 4;
-                        histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2);
+                        histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
                         hold on;
-                        histogram(numAborted{curInd},'normalization','pdf','binwidth',2);
+                        if (p.Results.histograms_only)
+                            histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        else
+                            [F,xi,bw] = ksdensity(numAborted{curInd},NUM_ABORTED_VALS,'Bandwidth',NUM_ABORTED_BANDWIDTH);
+                            plot(xi,F,'LineWidth',2)
+                        end
                         xlabel('# of trials aborted','FontSize',15,'FontWeight','bold')
                     elseif (j > 8 & j <= 12)
                         curInd = j - 8;
-                        histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02);
+                        histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
                         hold on;
-                        histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02);
+                        if (p.Results.histograms_only)
+                            histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                        else
+                            [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
+                            plot(xi,F,'LineWidth',2)
+                        end
                         xlabel('EoR optimality','FontSize',15,'FontWeight','bold')
                     else
                         curInd = j - 12;
-                        histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02)
+                        histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
                         hold on;
-                        histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02)
+                        if (p.Results.histograms_only)
+                            histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+                        else
+                            [F,xi,bw] = ksdensity(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),PERCENT_COMPLETED_PR_VALS,'Bandwidth',PERCENT_COMPLETED_PR_BANDWIDTH);
+                            plot(xi,F,'LineWidth',2)
+                        end
                         xlabel('% of PR trial completed','FontSize',15,'FontWeight','bold')
                     end
                 end
@@ -161,28 +227,48 @@ else
             for j=1:16
                 subplot(4,4,j)
                 if (j <= 4)
-                    histogram(NL_observed{j},'normalization','pdf','binwidth',2);
+                    histogram(NL_observed{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
                     hold on;
-                    histogram(numLR{j},'normalization','pdf','binwidth',2);
+                    if (p.Results.histograms_only)
+                        histogram(numLR{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                    else
+                        [F,xi,bw] = ksdensity(numLR{j},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
+                        plot(xi,F,'LineWidth',2)
+                    end
                     xlabel('# of completed PR trials','FontSize',15,'FontWeight','bold')
                     title([sessionTypes{j}])
                 elseif (j > 4 & j <= 8)
                     curInd = j - 4;
-                    histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2);
+                    histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
                     hold on;
-                    histogram(numAborted{curInd},'normalization','pdf','binwidth',2);
+                    if (p.Results.histograms_only)
+                        histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                    else
+                        [F,xi,bw] = ksdensity(numAborted{curInd},NUM_ABORTED_VALS,'Bandwidth',NUM_ABORTED_BANDWIDTH);
+                        plot(xi,F,'LineWidth',2)
+                    end
                     xlabel('# of trials aborted','FontSize',15,'FontWeight','bold')
                 elseif (j > 8 & j <= 12)
                     curInd = j - 8;
-                    histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02);
+                    histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
                     hold on;
-                    histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02);
+                    if (p.Results.histograms_only)
+                        histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                    else
+                        [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
+                        plot(xi,F,'LineWidth',2)
+                    end
                     xlabel('EoR optimality','FontSize',15,'FontWeight','bold')
                 else
                     curInd = j - 12;
-                    histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02)
+                    histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
                     hold on;
-                    histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02)
+                    if (p.Results.histograms_only)
+                        histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+                    else
+                        [F,xi,bw] = ksdensity(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),PERCENT_COMPLETED_PR_VALS,'Bandwidth',PERCENT_COMPLETED_PR_BANDWIDTH);
+                        plot(xi,F,'LineWidth',2)
+                    end
                     xlabel('% of PR trial completed','FontSize',15,'FontWeight','bold')
                 end
             end
