@@ -25,7 +25,16 @@ addParameter(p,'initializationMethod','random',@ischar)
 addParameter(p,'forgettingType','none',@ischar)
 addParameter(p,'forgettingParams',[],@isnumeric)
 addParameter(p,'Only120Trials',false,@islogical)
+addParameter(p,'fullANS',false,@islogical)
 parse(p,sessionType,nTrials,agentType,nAgents,actionSelectionMethod,agentParams,logisticParams,varargin{:})
+
+if (p.Results.fullANS)
+    if (~isfield(agentParams,'ans_sigma'))
+        error('fullANS is selected but there is not ans_sigma parameter')
+    else
+        ansFunc = @(x,sigma) lognrnd(log(x) - (sigma^2)/2,sigma);
+    end
+end
 
 agentType = p.Results.agentType;
 actionSelectionMethod = p.Results.actionSelectionMethod;
@@ -157,7 +166,11 @@ for i=1:nAgents
         if (action == 1) % if chose action 1 (SR side)
             [hitBound,abortInd] = logisticAbortProcess(Q(1),Q(2),Ps,logisticParams);
             if (~hitBound)
-                r = SR/denomsSR(t); %SR/utilityFunc2(utilityFuncValsSR(t));
+                if (p.Results.fullANS)
+                    r = ansFunc(SR,agentParams.ans_sigma)/denomsSR(t);
+                else
+                    r = SR/denomsSR(t); %SR/utilityFunc2(utilityFuncValsSR(t));
+                end
                 rewards(t) = SR;
                 nPresses = nPresses + Ps;
                 presses(t) = Ps;

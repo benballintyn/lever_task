@@ -5,12 +5,21 @@ addRequired(p,'top_k',@isnumeric)
 addParameter(p,'single_dir',false,@islogical)
 addParameter(p,'fitStatsOnly',false,@islogical)
 addParameter(p,'fitMethod','logprob_joint',@ischar)
+addParameter(p,'Only120Trials',false,@islogical)
 parse(p,datadir,top_k,varargin{:})
 
-NL_observed = load('optimality/WT/NL_observed.mat'); NL_observed=NL_observed.NL_observed;
-nTrialsAborted = load('optimality/WT/nTrialsAborted.mat'); nTrialsAborted=nTrialsAborted.nTrialsAborted;
-EoR_optimalities = load('optimality/WT/EoR_optimalities.mat'); EoR_optimalities=EoR_optimalities.EoR_optimalities;
-percentCompletedPR_allTrials = load('driftRL/abort_analysis/percentCompletedPR_allTrials.mat'); percentCompletedPR_allTrials = percentCompletedPR_allTrials.percentCompletedPR_allTrials;
+if (p.Results.Only120Trials)
+    mouseDataDir = '~/phd/lever_task/analysis_120_trials';
+    NL_observed = load([mouseDataDir '/NL_observed.mat']); NL_observed=NL_observed.NL_observed;
+    nTrialsAborted = load([mouseDataDir '/nTrialsAborted.mat']); nTrialsAborted=nTrialsAborted.nTrialsAborted;
+    EoR_optimalities = load([mouseDataDir '/EoR_optimalities.mat']); EoR_optimalities=EoR_optimalities.EoR_optimalities;
+    percentCompletedPR_allTrials = load([mouseDataDir '/percentCompletedPR_allTrials.mat']); percentCompletedPR_allTrials = percentCompletedPR_allTrials.percentCompletedPR_allTrials;
+else
+    NL_observed = load('~/phd/lever_task/optimality/WT/NL_observed.mat'); NL_observed=NL_observed.NL_observed;
+    nTrialsAborted = load('~/phd/lever_task/optimality/WT/nTrialsAborted.mat'); nTrialsAborted=nTrialsAborted.nTrialsAborted;
+    EoR_optimalities = load('~/phd/lever_task/optimality/WT/EoR_optimalities.mat'); EoR_optimalities=EoR_optimalities.EoR_optimalities;
+    percentCompletedPR_allTrials = load('~/phd/lever_task/driftRL/abort_analysis/percentCompletedPR_allTrials.mat'); percentCompletedPR_allTrials = percentCompletedPR_allTrials.percentCompletedPR_allTrials;
+end
 
 sessionTypes = {'2xFR6','2xFR12','5xFR6','5xFR12'};
 if (p.Results.single_dir)
@@ -43,13 +52,13 @@ if (p.Results.single_dir)
             xlabel('EoR optimality','FontSize',15,'FontWeight','bold')
         else
             curInd = i - 12;
-            histogram(percentCompletedPR_allTrials{curInd},'normalization','pdf','binwidth',.02)
+            histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02)
             hold on;
-            histogram(percentCompletedPR{curInd},'normalization','pdf','binwidth',.02)
+            histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02)
             xlabel('% of PR trial completed','FontSize',15,'FontWeight','bold')
         end
     end
-    suptitle(num2str(params))
+    sgtitle(num2str(params))
     set(gcf,'Position',[10 10 1400 1200])
     scores = score;
     allParams = params;
@@ -104,7 +113,7 @@ else
                     end
                 end
                 curtitle = {num2str(params),['index = ' num2str(inds(i)) ' score = ' num2str(scores(inds(i)))]};
-                suptitle(curtitle)
+                sgtitle(curtitle)
                 set(gcf,'Position',[10 10 1400 1200])
             elseif (strcmp(p.Results.fitMethod,'logprob_independent'))
                 for j=1:16
@@ -129,14 +138,14 @@ else
                         xlabel('EoR optimality','FontSize',15,'FontWeight','bold')
                     else
                         curInd = j - 12;
-                        histogram(percentCompletedPR_allTrials{curInd},'normalization','pdf','binwidth',.02)
+                        histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02)
                         hold on;
-                        histogram(percentCompletedPR{curInd},'normalization','pdf','binwidth',.02)
+                        histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02)
                         xlabel('% of PR trial completed','FontSize',15,'FontWeight','bold')
                     end
                 end
                 curtitle = {num2str(params),['index = ' num2str(inds(i)) ' score = ' num2str(scores(inds(i)))]};
-                suptitle(curtitle)
+                sgtitle(curtitle)
                 set(gcf,'Position',[10 10 1400 1200])
             end
         end
@@ -171,14 +180,14 @@ else
                     xlabel('EoR optimality','FontSize',15,'FontWeight','bold')
                 else
                     curInd = j - 12;
-                    histogram(percentCompletedPR_allTrials{curInd},'normalization','pdf','binwidth',.02)
+                    histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02)
                     hold on;
-                    histogram(percentCompletedPR{curInd},'normalization','pdf','binwidth',.02)
+                    histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02)
                     xlabel('% of PR trial completed','FontSize',15,'FontWeight','bold')
                 end
             end
             curtitle = {num2str(params),['index = ' num2str(inds(i)) ' score = ' num2str(scores(inds(i)))]};
-            suptitle(curtitle)
+            sgtitle(curtitle)
             set(gcf,'Position',[10 10 1400 1200])
         end
     end

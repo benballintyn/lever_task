@@ -12,9 +12,15 @@ addRequired(p,'scoreType',@ischar)
 addRequired(p,'modelType',@ischar)
 addRequired(p,'basedir',@ischar)
 addRequired(p,'maxFunEvals',@isnumeric)
+addParameter(p,'driftType','value_based_drift',@ischar)
 addParameter(p,'Only120Trials',false,@islogical)
+addParameter(p,'fullANS',false,@islogical)
 parse(p,agentType,actionSelectionMethod,utilityFunc1,utilityFunc2,initializationMethod,...
     forgettingType,scoreType,modelType,basedir,maxFunEvals,varargin{:})
+
+if (~any(strcmp({p.Results.utilityFunc1,p.Results.utilityFunc2},'ansUtilityFunc')) && p.Results.fullANS)
+    error('If fullANS == true, one of the utility functions must be ansUtilityFunc')
+end
 
 if (~exist(basedir,'dir'))
     mkdir(basedir);
@@ -27,6 +33,9 @@ elseif (~strcmp(utilityFunc1,'') && strcmp(utilityFunc2,''))
     savedir = [basedir '/' agentType '_' actionSelectionMethod '_' utilityFunc1 '_initialization_' initializationMethod '_forgettingType_' p.Results.forgettingType];
 else
     savedir = [basedir '/' agentType '_' actionSelectionMethod '_' utilityFunc1 '_' utilityFunc2 '_initialization_' initializationMethod '_forgettingType_' p.Results.forgettingType];
+end
+if (p.Results.fullANS)
+    savedir = [savedir '_fullANS'];
 end
 
 [status,SYSTEM_NAME] = system('hostname');
@@ -50,7 +59,20 @@ runParams.forgettingType = p.Results.forgettingType;
 runParams.scoreType = p.Results.scoreType;
 runParams.savedir = savedir;
 runParams.randomSeed = cputime;
+if (p.Results.fullANS)
+    runParams.fullANS = true;
+else
+    runParams.fullANS = false;
+end
 rng(runParams.randomSeed)
+
+utilityFuncs = {utilityFunc1,utilityFunc2};
+[lb,ub,paramNames] = getParamBounds(p.Results.agentType,p.Results.actionSelectionMethod,...
+utilityFuncs,p.Results.forgettingType,p.Results.modelType);
+
+runParams.paramNames = paramNames;
+runParams.lower_bounds = lb;
+runParams.upper_bounds = ub;
 
 if (~exist(runParams.savedir,'dir'))
     mkdir(runParams.savedir)
@@ -77,18 +99,9 @@ else
     %options=optimoptions('surrogateopt','MaxFunctionEvaluations',maxFunEvals,'PlotFcn','surrogateoptplot','UseParallel',false);
 end
 
-utilityFuncs = {utilityFunc1,utilityFunc2};
-[lb,ub] = getParamBounds(p.Results.agentType,p.Results.actionSelectionMethod,...
-utilityFuncs,p.Results.forgettingType,p.Results.modelType);
-
-switch p.Results.modelType
-    case 'driftRL'
-    case 'driftRL_valueUpdate'
-    case 'logisticAbortRL'
-        f = @(x)surrogate_optim_logisticAbortRL_inner_loop(x,savedir,agentType,actionSelectionMethod,...
-            initializationMethod,utilityFunc1,utilityFunc2,forgettingType,scoreType,...
-            'Only120Trials',p.Results.Only120Trials);
-        xmin = surrogateopt(f,lb,ub,options);
-end
+f = @(x) lever_task_surrogate_optim_inner_loop(x,savedir,agentType,actionSelectionMethod,...
+            initializationMethod,utilityFunc1,utilityFunc2,forgettingType,scoreType,p.Results.modelType,...
+            'Only120Trials',p.Results.Only120Trials,'driftType',p.Results.driftType);
+xmin = surrogateopt(f,lb,ub,options);
 end
 
