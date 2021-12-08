@@ -7,7 +7,17 @@ end
 
 useOnly120Trials = true;
 
-externalHDDir = '/media/ben/Varda/';
+% Check which computer is in use --> which external drive to use
+[status,result] = system('hostname');
+computerName = strtrim(result);
+if (strcmp(computerName,'miller-lab-ubuntu2'))
+    externalHDDir = '/media/ben/Manwe/';
+elseif (strcmp(computerName,'silmaril'))
+    externalHDDir = '/media/ben/Varda/';
+else
+    error('hostname not recognized')
+end
+
 externalDataDir = [externalHDDir 'phd/lever_task/'];
 if (useOnly120Trials)
     driftRLDir = [externalDataDir 'driftRL/results/Only120Trials/logprob_joint/value_based_drift/'];

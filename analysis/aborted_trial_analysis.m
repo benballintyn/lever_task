@@ -1,7 +1,14 @@
 %%
 clear all; close all
-saveDir = '~/phd/lever_task/driftRL/abort_analysis/';
+saveDir = '~/phd/lever_task/abort_analysis/';
+if (~exist(saveDir,'dir'))
+    mkdir(saveDir)
+end
 figDir = [saveDir 'figures/'];
+if (~exist(figDir,'dir'))
+    mkdir(figDir)
+end
+
 %%
 mice = load('processed_data/WT/animals.mat'); mice=mice.animals;
 abort_countPR_all = zeros(100,100);
@@ -496,6 +503,7 @@ Fall = fit(dataTable.RelativeValue(PRtrials),dataTable.WasAborted(PRtrials),ft);
 f = @(x,A,B) 1 - 1./(1 + exp(-A*x)) + B;
 x = -1:.001:5;
 figure;
+elim_whitespace
 scatter(meanbins,fracAborted,'.'); 
 hold on;
 %plot(x,f(x,F.A,F.B))
@@ -505,8 +513,9 @@ legend({'Binned data',...
 xlabel('Relative value (PR - FR)')
 ylabel('Fraction of trials aborted')
 figName = 'fracAborted_vs_relativeValue';
+set(gcf,'Position',[10 10 1600 1200])
 saveas(gcf,[figDir figName],'fig')
-saveas(gcf,[figDir figName],'eps')
+saveas(gcf,[figDir figName],'epsc')
 print([figDir figName '.png'],'-dpng','-r600')
 
 %%
