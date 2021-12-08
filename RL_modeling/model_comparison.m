@@ -1,6 +1,6 @@
 %pizza_talk_figs_2021
 %%
-figureDir = '/home/ben/phd/lever_task/publication/modeling/';
+figureDir = '/home/ben/phd/lever_task/publication/modeling/12_7_21';
 if (~exist(figureDir,'dir'))
     mkdir(figureDir)
 end

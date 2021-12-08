@@ -1,0 +1,31 @@
+%% MODELING PAPER FIGURES
+SAVE_DIR = '~/phd/lever_task/publication/modeling/figures/v1/';
+if (~exist(SAVE_DIR,'dir'))
+    mkdir(SAVE_DIR)
+end
+
+NL_optimal = [10 22 28 58];
+sessionTypes = {'2xFR6','2xFR12','5xFR6','5xFR12'};
+NL_observed = load(['optimality/WT/NL_observed.mat']); NL_observed=NL_observed.NL_observed;
+
+%% Fig 1C (Optimal switching points with FR/PR values vs. trial #)
+load('~/phd/lever_task/publication/modeling/data_files/perfectAgentQ.mat');
+for i=1:4
+    subplot(2,2,i)
+    plot(Q{i})
+    hold on;
+    plot([NL_optimal(i) NL_optimal(i)],[0 8],'Color','k')
+    legend({'FR','PR','Optimal PR #'})
+    title(sessionTypes{i})
+    ylim([0 8])
+    xlim([0 60])
+    xlabel('PR trial #','fontsize',20,'fontweight','bold')
+    ylabel('EoR','fontsize',20,'fontweight','bold')
+    set(gca,'fontsize',15,'fontweight','bold')
+end
+set(gcf,'Position',[10 10 1600 1200])
+figName = 'perfect_agent_Qvalues_optimal_labeled';
+saveas(gcf,[SAVE_DIR figName '.fig'],'fig')
+print([SAVE_DIR figName '.png'],'-dpng','-r600')
+
+%% Fig 2A (P(FR) & P(PR) 
