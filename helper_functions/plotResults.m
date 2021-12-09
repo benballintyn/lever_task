@@ -1,4 +1,4 @@
-function [scores,allParams] = plotResults(datadir,top_k,varargin)
+function [scores,allParams,dirContents] = plotResults(datadir,top_k,varargin)
 p=inputParser;
 addRequired(p,'datadir',@ischar)
 addRequired(p,'top_k',@isnumeric)
@@ -7,6 +7,7 @@ addParameter(p,'fitStatsOnly',false,@islogical)
 addParameter(p,'fitMethod','logprob_joint',@ischar)
 addParameter(p,'Only120Trials',false,@islogical)
 addParameter(p,'histograms_only',false,@islogical)
+addParameter(p,'useCDFs',false,@islogical)
 parse(p,datadir,top_k,varargin{:})
 
 NUM_LR_VALS = 0:.01:100;
@@ -44,47 +45,83 @@ if (p.Results.single_dir)
     for i=1:16
         subplot(4,4,i)
         if (i <= 4)
-            histogram(NL_observed{i},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
-            hold on;
-            if (p.Results.histograms_only)
-                histogram(numLR{i},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+            if (~p.Results.useCDFs)
+                histogram(NL_observed{i},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                hold on;
+                if (p.Results.histograms_only)
+                    histogram(numLR{i},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                else
+                    [F,xi,bw] = ksdensity(numLR{i},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
+                    plot(xi,F,'LineWidth',2)
+                end
             else
-                [F,xi,bw] = ksdensity(numLR{i},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
-                plot(xi,F,'LineWidth',2)
+                [y_obs,x_obs] = ecdf(NL_observed{i});
+                [y_mdl,x_mdl] = ecdf(numLR{i});
+                plot(x_obs,y_obs)
+                hold on;
+                plot(x_mdl,y_mdl)
+                ylabel('CDF(x)')
             end
             xlabel('# of completed PR trials','FontSize',15,'FontWeight','bold')
             title([sessionTypes{i}])
         elseif (i > 4 & i <= 8)
             curInd = i - 4;
-            histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
-            hold on;
-            if (p.Results.histograms_only)
-                histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+            if (~p.Results.useCDFs)
+                histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                hold on;
+                if (p.Results.histograms_only)
+                    histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                else
+                    [F,xi,bw] = ksdensity(numAborted{curInd},'Bandwidth',NUM_ABORTED_BANDWIDTH);
+                    plot(xi,F,'LineWidth',2)
+                end
             else
-                [F,xi,bw] = ksdensity(numAborted{curInd},'Bandwidth',NUM_ABORTED_BANDWIDTH);
-                plot(xi,F,'LineWidth',2)
+                [y_obs,x_obs] = ecdf(NL_observed{curInd});
+                [y_mdl,x_mdl] = ecdf(numLR{curInd});
+                plot(x_obs,y_obs)
+                hold on;
+                plot(x_mdl,y_mdl)
+                ylabel('CDF(x)')
             end
             xlabel('# of trials aborted','FontSize',15,'FontWeight','bold')
         elseif (i > 8 & i <= 12)
             curInd = i - 8;
-            histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
-            hold on;
-            if (p.Results.histograms_only)
-                histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+            if (~p.Results.useCDFs)
+                histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                hold on;
+                if (p.Results.histograms_only)
+                    histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                else
+                    [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
+                    plot(xi,F,'LineWidth',2)
+                end
             else
-                [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
-                plot(xi,F,'LineWidth',2)
+                [y_obs,x_obs] = ecdf(NL_observed{curInd});
+                [y_mdl,x_mdl] = ecdf(numLR{curInd});
+                plot(x_obs,y_obs)
+                hold on;
+                plot(x_mdl,y_mdl)
+                ylabel('CDF(x)')
             end
             xlabel('EoR optimality','FontSize',15,'FontWeight','bold')
         else
             curInd = i - 12;
-            histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
-            hold on;
-            if (p.Results.histograms_only)
-                histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+            if (~p.Results.useCDFs)
+                histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+                hold on;
+                if (p.Results.histograms_only)
+                    histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+                else
+                    [F,xi,bw] = ksdensity(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),PERCENT_COMPLETED_PR_VALS,'Bandwidth',PERCENT_COMPLETED_PR_BANDWIDTH);
+                    plot(xi,F,'LineWidth',2)
+                end
             else
-                [F,xi,bw] = ksdensity(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),PERCENT_COMPLETED_PR_VALS,'Bandwidth',PERCENT_COMPLETED_PR_BANDWIDTH);
-                plot(xi,F,'LineWidth',2)
+                [y_obs,x_obs] = ecdf(NL_observed{curInd});
+                [y_mdl,x_mdl] = ecdf(numLR{curInd});
+                plot(x_obs,y_obs)
+                hold on;
+                plot(x_mdl,y_mdl)
+                ylabel('CDF(x)')
             end
             xlabel('% of PR trial completed','FontSize',15,'FontWeight','bold')
         end
@@ -113,6 +150,7 @@ else
     
     if (p.Results.fitStatsOnly)
         [~,inds] = sort(scores);
+        disp(inds(1:3))
         for i=1:top_k
             numLR = load([datadir '/' dirContents(inds(i)).name '/numLR.mat']); numLR=numLR.numLR;
             numAborted = load([datadir '/' dirContents(inds(i)).name '/numAborted.mat']); numAborted=numAborted.numAborted;
@@ -124,36 +162,63 @@ else
                 for j=1:12
                     subplot(3,4,j)
                     if (j <= 4)
-                        histogram(NL_observed{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
-                        hold on;
-                        if (p.Results.histograms_only)
-                            histogram(numLR{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        if (~p.Results.useCDFs)
+                            histogram(NL_observed{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                            hold on;
+                            if (p.Results.histograms_only)
+                                histogram(numLR{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                            else
+                                [F,xi,bw] = ksdensity(numLR{j},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
+                                plot(xi,F,'LineWidth',2)
+                            end
                         else
-                            [F,xi,bw] = ksdensity(numLR{j},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
-                            plot(xi,F,'LineWidth',2)
+                            [y_obs,x_obs] = ecdf(NL_observed{j});
+                            [y_mdl,x_mdl] = ecdf(numLR{j});
+                            plot(x_obs,y_obs)
+                            hold on;
+                            plot(x_mdl,y_mdl)
+                            ylabel('CDF(x)')
                         end
                         xlabel('# of completed PR trials','FontSize',15,'FontWeight','bold')
                         title([sessionTypes{j}])
                     elseif (j > 4 & j <= 8)
                         curInd = j - 4;
-                        histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
-                        hold on;
-                        if (p.Results.histograms_only)
-                            histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        if (~p.Results.useCDFs)
+                            histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                            hold on;
+                            if (p.Results.histograms_only)
+                                histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                            else
+                                [F,xi,bw] = ksdensity(numAborted{curInd},NUM_ABORTED_VALS,'Bandwidth',NUM_ABORTED_BANDWIDTH);
+                                plot(xi,F,'LineWidth',2)
+                            end
                         else
-                            [F,xi,bw] = ksdensity(numAborted{curInd},NUM_ABORTED_VALS,'Bandwidth',NUM_ABORTED_BANDWIDTH);
-                            plot(xi,F,'LineWidth',2)
+                            [y_obs,x_obs] = ecdf(NL_observed{curInd});
+                            [y_mdl,x_mdl] = ecdf(numLR{curInd});
+                            plot(x_obs,y_obs)
+                            hold on;
+                            plot(x_mdl,y_mdl)
+                            ylabel('CDF(x)')
                         end
                         xlabel('# of trials aborted','FontSize',15,'FontWeight','bold')
                     else
                         curInd = j - 8;
-                        histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
-                        hold on;
-                        if (p.Results.histograms_only)
-                            histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                        if (~p.Results.useCDFs)
+                            histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                            hold on;
+                            if (p.Results.histograms_only)
+                                histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                            else
+                                [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
+                                plot(xi,F,'LineWidth',2)
+                            end
                         else
-                            [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
-                            plot(xi,F,'LineWidth',2)
+                            [y_obs,x_obs] = ecdf(NL_observed{curInd});
+                            [y_mdl,x_mdl] = ecdf(numLR{curInd});
+                            plot(x_obs,y_obs)
+                            hold on;
+                            plot(x_mdl,y_mdl)
+                            ylabel('CDF(x)')
                         end
                         xlabel('EoR optimality','FontSize',15,'FontWeight','bold')
                     end
@@ -165,47 +230,83 @@ else
                 for j=1:16
                     subplot(4,4,j)
                     if (j <= 4)
-                        histogram(NL_observed{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
-                        hold on;
-                        if (p.Results.histograms_only)
-                            histogram(numLR{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        if (~p.Results.useCDFs)
+                            histogram(NL_observed{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                            hold on;
+                            if (p.Results.histograms_only)
+                                histogram(numLR{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                            else
+                                [F,xi,bw] = ksdensity(numLR{j},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
+                                plot(xi,F,'LineWidth',2)
+                            end
                         else
-                            [F,xi,bw] = ksdensity(numLR{j},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
-                            plot(xi,F,'LineWidth',2)
+                            [y_obs,x_obs] = ecdf(NL_observed{j});
+                            [y_mdl,x_mdl] = ecdf(numLR{j});
+                            plot(x_obs,y_obs)
+                            hold on;
+                            plot(x_mdl,y_mdl)
+                            ylabel('CDF(x)')
                         end
                         xlabel('# of completed PR trials','FontSize',15,'FontWeight','bold')
                         title([sessionTypes{j}])
                     elseif (j > 4 & j <= 8)
                         curInd = j - 4;
-                        histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
-                        hold on;
-                        if (p.Results.histograms_only)
-                            histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        if (~p.Results.useCDFs)
+                            histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                            hold on;
+                            if (p.Results.histograms_only)
+                                histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                            else
+                                [F,xi,bw] = ksdensity(numAborted{curInd},NUM_ABORTED_VALS,'Bandwidth',NUM_ABORTED_BANDWIDTH);
+                                plot(xi,F,'LineWidth',2)
+                            end
                         else
-                            [F,xi,bw] = ksdensity(numAborted{curInd},NUM_ABORTED_VALS,'Bandwidth',NUM_ABORTED_BANDWIDTH);
-                            plot(xi,F,'LineWidth',2)
+                            [y_obs,x_obs] = ecdf(NL_observed{curInd});
+                            [y_mdl,x_mdl] = ecdf(numLR{curInd});
+                            plot(x_obs,y_obs)
+                            hold on;
+                            plot(x_mdl,y_mdl)
+                            ylabel('CDF(x)')
                         end
                         xlabel('# of trials aborted','FontSize',15,'FontWeight','bold')
                     elseif (j > 8 & j <= 12)
                         curInd = j - 8;
-                        histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
-                        hold on;
-                        if (p.Results.histograms_only)
-                            histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                        if (~p.Results.useCDFs)
+                            histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                            hold on;
+                            if (p.Results.histograms_only)
+                                histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                            else
+                                [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
+                                plot(xi,F,'LineWidth',2)
+                            end
                         else
-                            [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
-                            plot(xi,F,'LineWidth',2)
+                            [y_obs,x_obs] = ecdf(NL_observed{curInd});
+                            [y_mdl,x_mdl] = ecdf(numLR{curInd});
+                            plot(x_obs,y_obs)
+                            hold on;
+                            plot(x_mdl,y_mdl)
+                            ylabel('CDF(x)')
                         end
                         xlabel('EoR optimality','FontSize',15,'FontWeight','bold')
                     else
                         curInd = j - 12;
-                        histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
-                        hold on;
-                        if (p.Results.histograms_only)
-                            histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+                        if (~p.Results.useCDFs)
+                            histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+                            hold on;
+                            if (p.Results.histograms_only)
+                                histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+                            else
+                                [F,xi,bw] = ksdensity(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),PERCENT_COMPLETED_PR_VALS,'Bandwidth',PERCENT_COMPLETED_PR_BANDWIDTH);
+                                plot(xi,F,'LineWidth',2)
+                            end
                         else
-                            [F,xi,bw] = ksdensity(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),PERCENT_COMPLETED_PR_VALS,'Bandwidth',PERCENT_COMPLETED_PR_BANDWIDTH);
-                            plot(xi,F,'LineWidth',2)
+                            [y_obs,x_obs] = ecdf(NL_observed{curInd});
+                            [y_mdl,x_mdl] = ecdf(numLR{curInd});
+                            plot(x_obs,y_obs)
+                            hold on;
+                            plot(x_mdl,y_mdl)
+                            ylabel('CDF(x)')
                         end
                         xlabel('% of PR trial completed','FontSize',15,'FontWeight','bold')
                     end
@@ -227,47 +328,83 @@ else
             for j=1:16
                 subplot(4,4,j)
                 if (j <= 4)
-                    histogram(NL_observed{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
-                    hold on;
-                    if (p.Results.histograms_only)
-                        histogram(numLR{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                    if (~p.Results.useCDFs)
+                        histogram(NL_observed{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        hold on;
+                        if (p.Results.histograms_only)
+                            histogram(numLR{j},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        else
+                            [F,xi,bw] = ksdensity(numLR{j},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
+                            plot(xi,F,'LineWidth',2)
+                        end
                     else
-                        [F,xi,bw] = ksdensity(numLR{j},NUM_LR_VALS,'Bandwidth',NUM_LR_BANDWIDTH);
-                        plot(xi,F,'LineWidth',2)
+                        [y_obs,x_obs] = ecdf(NL_observed{j});
+                        [y_mdl,x_mdl] = ecdf(numLR{j});
+                        plot(x_obs,y_obs)
+                        hold on;
+                        plot(x_mdl,y_mdl)
+                        ylabel('CDF(x)')
                     end
                     xlabel('# of completed PR trials','FontSize',15,'FontWeight','bold')
                     title([sessionTypes{j}])
                 elseif (j > 4 & j <= 8)
                     curInd = j - 4;
-                    histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
-                    hold on;
-                    if (p.Results.histograms_only)
-                        histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                    if (~p.Results.useCDFs)
+                        histogram(nTrialsAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        hold on;
+                        if (p.Results.histograms_only)
+                            histogram(numAborted{curInd},'normalization','pdf','binwidth',2,'DisplayStyle','stairs','LineWidth',2);
+                        else
+                            [F,xi,bw] = ksdensity(numAborted{curInd},NUM_ABORTED_VALS,'Bandwidth',NUM_ABORTED_BANDWIDTH);
+                            plot(xi,F,'LineWidth',2)
+                        end
                     else
-                        [F,xi,bw] = ksdensity(numAborted{curInd},NUM_ABORTED_VALS,'Bandwidth',NUM_ABORTED_BANDWIDTH);
-                        plot(xi,F,'LineWidth',2)
+                        [y_obs,x_obs] = ecdf(NL_observed{curInd});
+                        [y_mdl,x_mdl] = ecdf(numLR{curInd});
+                        plot(x_obs,y_obs)
+                        hold on;
+                        plot(x_mdl,y_mdl)
+                        ylabel('CDF(x)')
                     end
                     xlabel('# of trials aborted','FontSize',15,'FontWeight','bold')
                 elseif (j > 8 & j <= 12)
                     curInd = j - 8;
-                    histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
-                    hold on;
-                    if (p.Results.histograms_only)
-                        histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                    if (~p.Results.useCDFs)
+                        histogram(EoR_optimalities{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                        hold on;
+                        if (p.Results.histograms_only)
+                            histogram(performanceEoR{curInd},'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2);
+                        else
+                            [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
+                            plot(xi,F,'LineWidth',2)
+                        end
                     else
-                        [F,xi,bw] = ksdensity(performanceEoR{curInd},PERFORMANCE_EOR_VALS,'Bandwidth',PERFORMANCE_EOR_BANDWIDTH);
-                        plot(xi,F,'LineWidth',2)
+                        [y_obs,x_obs] = ecdf(NL_observed{curInd});
+                        [y_mdl,x_mdl] = ecdf(numLR{curInd});
+                        plot(x_obs,y_obs)
+                        hold on;
+                        plot(x_mdl,y_mdl)
+                        ylabel('CDF(x)')
                     end
                     xlabel('EoR optimality','FontSize',15,'FontWeight','bold')
                 else
                     curInd = j - 12;
-                    histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
-                    hold on;
-                    if (p.Results.histograms_only)
-                        histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+                    if (~p.Results.useCDFs)
+                        histogram(percentCompletedPR_allTrials{curInd}(percentCompletedPR_allTrials{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+                        hold on;
+                        if (p.Results.histograms_only)
+                            histogram(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),'normalization','pdf','binwidth',.02,'DisplayStyle','stairs','LineWidth',2)
+                        else
+                            [F,xi,bw] = ksdensity(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),PERCENT_COMPLETED_PR_VALS,'Bandwidth',PERCENT_COMPLETED_PR_BANDWIDTH);
+                            plot(xi,F,'LineWidth',2)
+                        end
                     else
-                        [F,xi,bw] = ksdensity(percentCompletedPR{curInd}(percentCompletedPR{curInd} < 1),PERCENT_COMPLETED_PR_VALS,'Bandwidth',PERCENT_COMPLETED_PR_BANDWIDTH);
-                        plot(xi,F,'LineWidth',2)
+                        [y_obs,x_obs] = ecdf(NL_observed{curInd});
+                        [y_mdl,x_mdl] = ecdf(numLR{curInd});
+                        plot(x_obs,y_obs)
+                        hold on;
+                        plot(x_mdl,y_mdl)
+                        ylabel('CDF(x)')
                     end
                     xlabel('% of PR trial completed','FontSize',15,'FontWeight','bold')
                 end

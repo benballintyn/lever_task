@@ -380,3 +380,5 @@ while (~oneHitBound && count <= 100)
     count=count+1;
 end
 
+%% Fig 4A Best fit drift RL stats with Weber-Fechner
+[scores,allParams] = plotResults(driftRLDirs{2},1,'fitStatsOnly',true,'Only120Trials',true);
