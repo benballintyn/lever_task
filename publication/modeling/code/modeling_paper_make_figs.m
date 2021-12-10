@@ -120,7 +120,9 @@ for i=1:4
     plot([NL_optimal(i) NL_optimal(i)],[0 1],'k','linewidth',2)
     xlabel('Trial number','fontsize',20,'fontweight','bold')
     ylabel('Choice probability','fontsize',20,'fontweight','bold')
-    legend({'P(FR)','P(PR)'},'location','best','fontsize',15,'fontweight','bold')
+    if (i == 1)
+        legend({'P(FR)','P(PR)'},'location','east','fontsize',15,'fontweight','bold')
+    end
     title(sessionTypes{i})
 end
 set(gcf,'Position',[10 10 2000 500])
@@ -145,7 +147,9 @@ for i=1:4
     
     xlabel('Trial number','fontsize',20,'fontweight','bold')
     ylabel('Choice probability','fontsize',20,'fontweight','bold')
-    legend({'P(FR)','P(PR)'},'location','best','fontsize',15,'fontweight','bold')
+    if (i == 1)
+        legend({'P(FR)','P(PR)'},'location','east','fontsize',15,'fontweight','bold')
+    end
     title(sessionTypes{i})
 end
 set(gcf,'Position',[10 10 2000 500])
@@ -309,7 +313,7 @@ hold on;
 %plot(x,f(x,F.A,F.B))
 plot(x,f(x,Fall.A,Fall.B))
 legend({'Binned data',...
-       ['logistic: \beta = ' num2str(Fall.A) ' , offset = ' num2str(Fall.B)]})
+       ['logistic: \beta = ' num2str(Fall.A) ' , offset = ' num2str(Fall.B)]},'fontsize',20,'fontweight','bold')
 xlabel('Relative value (PR - FR)')
 ylabel('Fraction of trials aborted')
 set(gcf,'Position',[10 10 1600 1200])
@@ -360,7 +364,7 @@ count = 0;
 while (~oneHitBound && count <= 100)
     [trajectory1,hitBound1,boundcross1,Qs1] = drift_valueUpdateProcess(Qcur,Qalt,driftRateCoeff,req,noiseAmplitude,0,1,60);
     [trajectory2,hitBound2,boundcross2,Qs2] = drift_valueUpdateProcess(Qcur,Qalt,driftRateCoeff,req,noiseAmplitude,0,1,60);
-    if (hitBound1 || hitBound2 & ~(hitBound1 & hitBound2))
+    if ((hitBound1 || hitBound2) & ~(hitBound1 & hitBound2))
         figure;
         elim_whitespace
         plot(1:req,trajectory1,'b','linewidth',3)
@@ -382,3 +386,28 @@ end
 
 %% Fig 4A Best fit drift RL stats with Weber-Fechner
 [scores,allParams] = plotResults(driftRLDirs{2},1,'fitStatsOnly',true,'Only120Trials',true);
+figName = 'fig4A_driftRL_WF_bestFit';
+saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
+saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
+print([FIGURE_DIR figName '.png'],'-dpng','-r600')
+
+%% Fig4B Best fit driftRL stats without Weber-Fechner
+[scores,allParams] = plotResults(driftRLDirs{4},1,'fitStatsOnly',true,'Only120Trials',true);
+figName = 'fig4B_driftRL_noWF_bestFit';
+saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
+saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
+print([FIGURE_DIR figName '.png'],'-dpng','-r600')
+
+%% Fig 5A Best fit logisticAbortRL stats with Weber-Fechner
+[scores,allParams] = plotResults(logisticRLDirs{2},1,'fitStatsOnly',true,'Only120Trials',true);
+figName = 'fig5A_logisticAbortRL_WF_bestFit';
+saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
+saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
+print([FIGURE_DIR figName '.png'],'-dpng','-r600')
+
+%% Fig 5B Best fit logisticAbortRL stats without Weber-Fechner
+[scores,allParams] = plotResults(logisticRLDirs{4},1,'fitStatsOnly',true,'Only120Trials',true);
+figName = 'fig5B_logisticAbortRL_WF_bestFit';
+saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
+saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
+print([FIGURE_DIR figName '.png'],'-dpng','-r600')

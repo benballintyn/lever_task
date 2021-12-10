@@ -187,7 +187,7 @@ for i=1:nAgents
         else % if chose action 2 (PR side)
             [hitBound,abortInd] = logisticAbortProcess(Q(2),Q(1),Pl,logisticParams);
             if (~hitBound)
-                r = LR/denomsPR(Pl); %LR/utilityFunc2(utilityFuncValsPR(Pl));
+                r = ansFunc(LR,agentParams.ans_sigma)/denomsPR(Pl); %LR/utilityFunc2(utilityFuncValsPR(Pl));
                 rewards(t) = LR;
                 nPresses = nPresses + Pl;
                 presses(t) = Pl;
