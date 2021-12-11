@@ -1,14 +1,15 @@
 % runGridSearch
 agentType = 'bandit';
 actionSelectionMethod = 'softmax';
-utilityFunc1 = '';
-utilityFunc2 = '';
+utilityFunc1 = 'ansUtilityFunc';
+utilityFunc2 = 'pressUtilityFunc';
 initializationMethod = 'mean_reward';
 forgettingType = 'decayToInitialValues';
 scoreType = 'logprob_joint';
-modelType = 'driftRL';
+modelType = 'logisticAbortRL';
 useOnly120Trials = true;
 driftType = 'value_based_drift';
+useFullANS = true;
 
 savedir = ['/media/ben/Manwe/phd/lever_task/' modelType '/results/Only120Trials/' scoreType];
 if (~exist(savedir,'dir'))
@@ -17,4 +18,4 @@ end
 
 [scores] = grid_search(agentType,actionSelectionMethod,...
     utilityFunc1,utilityFunc2,initializationMethod,forgettingType,scoreType,...
-    modelType,savedir,'Only120Trials',useOnly120Trials,'driftType',driftType);
+    modelType,savedir,'Only120Trials',useOnly120Trials,'driftType',driftType,'fullANS',useFullANS);

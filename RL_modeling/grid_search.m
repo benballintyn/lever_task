@@ -13,6 +13,7 @@ addRequired(p,'modelType',@ischar)
 addRequired(p,'basedir',@ischar)
 addParameter(p,'driftType','value_based_drift',@ischar)
 addParameter(p,'Only120Trials',false,@islogical)
+addParameter(p,'fullANS',false,@islogical)
 parse(p,agentType,actionSelectionMethod,utilityFunc1,utilityFunc2,initializationMethod,...
     forgettingType,scoreType,modelType,basedir,varargin{:})
 
@@ -28,7 +29,9 @@ elseif (~strcmp(utilityFunc1,'') && strcmp(utilityFunc2,''))
 else
     savedir = [basedir '/' agentType '_' actionSelectionMethod '_' utilityFunc1 '_' utilityFunc2 '_initialization_' initializationMethod '_forgettingType_' p.Results.forgettingType];
 end
-
+if (p.Results.fullANS)
+    savedir = [savedir '_fullANS'];
+end
 savedir = [savedir '/grid_search/'];
 
 [status,SYSTEM_NAME] = system('hostname');
@@ -84,6 +87,9 @@ Only120Trials = p.Results.Only120Trials;
 driftType = p.Results.driftType;
 
 parfor i=1:N_SAMPLES_PER_PARAM^N_PARAMS
+    if (exist([savedir '/' num2str(i)],'dir'))
+        continue;
+    end
     tempInds = cell(size(siz));
     [tempInds{:}] = ind2sub(siz,i);
     paramInds = [tempInds{:}];
@@ -95,7 +101,7 @@ parfor i=1:N_SAMPLES_PER_PARAM^N_PARAMS
     
     [score] = run_param_set(params,savedir,agentType,actionSelectionMethod,...
         initializationMethod,utilityFunc1,utilityFunc2,forgettingType,scoreType,...
-        modelType,i,'Only120Trials',Only120Trials,'driftType',driftType);
+        modelType,i,'Only120Trials',Only120Trials,'driftType',driftType,'fullANS',p.Results.fullANS);
     
     scores(i) = score;
 end
