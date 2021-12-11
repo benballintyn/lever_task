@@ -32,10 +32,9 @@ parse(p,sessionType,nTrials,agentType,nAgents,actionSelectionMethod,agentParams,
 if (p.Results.fullANS)
     if (~isfield(agentParams,'ans_sigma'))
         error('fullANS is selected but there is not ans_sigma parameter')
-    else
-        ansFunc = @(x,sigma) lognrnd(log(x) - (sigma^2)/2,sigma);
     end
 end
+ansFunc = @(x,sigma) lognrnd(log(x) - (sigma^2)/2,sigma);
 
 agentType = p.Results.agentType;
 actionSelectionMethod = p.Results.actionSelectionMethod;
@@ -171,7 +170,11 @@ for i=1:nAgents
         % rewards r are the per-trial EoR (ratio of reward
         % to cost)
         if (action == 1) % if chose action 1 (SR side)
-            [hitBound,abortInd] = logisticAbortProcess(Q(1),Q(2),Ps,logisticParams);
+            if (p.Results.fullANS)
+                [hitBound,abortInd] = logisticAbortProcess(Q(1),Q(2),Ps,logisticParams,ansFunc,p.Results.fullANS,agentParams.ans_sigma);
+            else
+                [hitBound,abortInd] = logisticAbortProcess(Q(1),Q(2),Ps,logisticParams,ansFunc,false,nan);
+            end
             if (~hitBound)
                 if (p.Results.fullANS)
                     r = ansFunc(SR,agentParams.ans_sigma)/denomsSR(t);
@@ -192,7 +195,11 @@ for i=1:nAgents
             end
             nS(t) = nS(t) + 1;
         else % if chose action 2 (PR side)
-            [hitBound,abortInd] = logisticAbortProcess(Q(2),Q(1),Pl,logisticParams);
+            if (p.Results.fullANS)
+                [hitBound,abortInd] = logisticAbortProcess(Q(2),Q(1),Pl,logisticParams,ansFunc,p.Results.fullANS,agentParams.ans_sigma);
+            else
+                [hitBound,abortInd] = logisticAbortProcess(Q(2),Q(1),Pl,logisticParams,ansFunc,false,nan);
+            end
             if (~hitBound)
                 r = ansFunc(LR,agentParams.ans_sigma)/denomsPR(Pl); %LR/utilityFunc2(utilityFuncValsPR(Pl));
                 rewards(t) = LR;
