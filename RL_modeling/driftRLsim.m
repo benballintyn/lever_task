@@ -1,5 +1,5 @@
 function [numSR,numLR,nS,nL,RoEoptimalities,EoRoptimalities,nSaborted,nLaborted,...
-    numAborted,percentCompletedPR] = driftRLsim(sessionType,nTrials,agentType,...
+    numAborted,percentCompletedPR,Qs] = driftRLsim(sessionType,nTrials,agentType,...
     nAgents,actionSelectionMethod,agentParams,driftParams,driftType,varargin)
 RoE_NL_optimal = [70.875 286.875 448.875 1798.875]; % lever presses
 EoR_NL_optimal = [10 22 28 58]; % trials
@@ -27,6 +27,7 @@ addParameter(p,'forgettingType','none',@ischar)
 addParameter(p,'forgettingParams',[],@isnumeric)
 addParameter(p,'Only120Trials',false,@islogical)
 addParameter(p,'fullANS',false,@islogical)
+addParameter(p,'recordQ',false,@islogical)
 parse(p,sessionType,nTrials,agentType,nAgents,actionSelectionMethod,agentParams,...
     driftParams,driftType,varargin{:})
 
@@ -133,6 +134,12 @@ for i=1:nAgents
         otherwise
             error('initializationMethod not recognized')
     end
+    if (p.Results.recordQ)
+        Qs = nan(nTrials + 1,2);
+        Qs(1,:) = Q;
+    else
+        Qs = nan(1,2);
+    end
     initialQValues = Q;
     Pl = 2; % initialize PR side lever press cost
     nPresses = 0;
@@ -232,6 +239,9 @@ for i=1:nAgents
         end
         if (useForgetting)
             Q(unchosenAction) = Q(unchosenAction) + alphaF*(forgetTargetCoeff*initialQValues(unchosenAction) - Q(unchosenAction));
+        end
+        if (p.Results.recordQ)
+            Qs(t+1,:) = Q;
         end
     end
     %curNumSR = sum(actions == 1);

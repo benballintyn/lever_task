@@ -91,7 +91,9 @@ for i=1:4
     plot(Q{i})
     hold on;
     plot([NL_optimal(i) NL_optimal(i)],[0 8],'Color','k')
-    legend({'FR','PR','Optimal PR #'})
+    if (i == 1)
+        legend({'FR','PR','Optimal PR #'})
+    end
     title(sessionTypes{i})
     ylim([0 8])
     xlim([0 60])
@@ -126,7 +128,7 @@ for i=1:4
     title(sessionTypes{i})
 end
 set(gcf,'Position',[10 10 2000 500])
-figName = 'fig2_p_FR_p_PR_mouse';
+figName = 'fig2A_p_FR_p_PR_mouse';
 saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
 saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
 print([FIGURE_DIR figName '.png'],'-dpng','-r600')
@@ -153,7 +155,7 @@ for i=1:4
     title(sessionTypes{i})
 end
 set(gcf,'Position',[10 10 2000 500])
-figName = 'fig2_p_FR_p_PR_agent';
+figName = 'fig2B_p_FR_p_PR_agent';
 saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
 saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
 print([FIGURE_DIR figName '.png'],'-dpng','-r600')
