@@ -163,7 +163,7 @@ if (any(strcmp(utilityFuncs,'pressUtilityFunc')))
 end
 % Approximate number system estimate function
 if (any(strcmp(utilityFuncs,'ansUtilityFunc')))
-    ansUtilityFunc = @(x,sigma) lognrnd(log(x) - (sigma^2)/2,sigma);
+    ansUtilityFunc = @(x,sigma) lognrnd(log(x) - (agentParams.sigma^2)/2,agentParams.sigma);
 end
 % Set utilityFunc1 and utilityFunc2 to appropriate functions
 if (strcmp(utilityFunc1,'ansUtilityFunc'))
