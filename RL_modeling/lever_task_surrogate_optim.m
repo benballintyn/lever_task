@@ -37,6 +37,8 @@ end
 if (p.Results.fullANS)
     savedir = [savedir '_fullANS'];
 end
+savedir = [savedir '/optimized/'];
+
 
 [status,SYSTEM_NAME] = system('hostname');
 if (~status)
@@ -101,7 +103,7 @@ end
 
 f = @(x) lever_task_surrogate_optim_inner_loop(x,savedir,agentType,actionSelectionMethod,...
             initializationMethod,utilityFunc1,utilityFunc2,forgettingType,scoreType,p.Results.modelType,...
-            'Only120Trials',p.Results.Only120Trials,'driftType',p.Results.driftType);
+            'Only120Trials',p.Results.Only120Trials,'driftType',p.Results.driftType,'fullANS',p.Results.fullANS);
 xmin = surrogateopt(f,lb,ub,options);
 end
 

@@ -2,11 +2,11 @@
 agentType = 'bandit';
 actionSelectionMethod = 'softmax';
 utilityFunc1 = 'ansUtilityFunc';
-utilityFunc2 = 'pressUtilityFunc';
+utilityFunc2 = '';
 initializationMethod = 'mean_reward';
 forgettingType = 'decayToInitialValues';
 scoreType = 'logprob_joint';
-modelType = 'logisticAbortRL';
+modelType = 'driftRL';
 useOnly120Trials = true;
 driftType = 'value_based_drift';
 useFullANS = true;

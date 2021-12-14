@@ -2,19 +2,27 @@ function [] = copy_grid_search_results_to_optimized(datadir)
 OPTIMIZED_DIR = [datadir '/optimized/'];
 GRID_SEARCH_DIR = [datadir '/grid_search/'];
 if (~exist(OPTIMIZED_DIR,'dir'))
-    error(['optimized directory does not exist inside ' datadir])
-elseif (~exist(GRID_SEARCH_DIR,'dir'))
+    mkdir(OPTIMIZED_DIR)
+    run_num = 0;
+    save([OPTIMIZED_DIR '/run_num.mat'],'run_num','-mat')
+end
+if (~exist(GRID_SEARCH_DIR,'dir'))
     warning('No grid search results to transfer')
     return;
 else
     directories = dir(OPTIMIZED_DIR);
     directories = directories(~ismember({directories.name},{'.','..'}));
     directories = directories([directories.isdir]);
-    for i=1:length(directories)
-        nums(i) = str2num(directories(i).name);
+    if (isempty(directories))
+        nums = 0;
+    else
+        for i=1:length(directories)
+            nums(i) = str2num(directories(i).name);
+        end
+    
+        [~,sortedOrder] = sort(nums);
+        directories = directories(sortedOrder);
     end
-    [~,sortedOrder] = sort(nums);
-    directories = directories(sortedOrder);
     
     run_num = load([OPTIMIZED_DIR '/run_num.mat']); run_num=run_num.run_num;
     
