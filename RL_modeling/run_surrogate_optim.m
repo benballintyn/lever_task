@@ -17,7 +17,7 @@ if (~status)
         case 'silmaril'
             savedir = ['/media/ben/Varda/phd/lever_task/' modelType '/results/Only120Trials/' scoreType];
         case 'miller_lab_ubuntu2'
-            savedir = ['/media/ben/Manwe/phd/lever_task/' modelType '/results/Only120Trials/'scoreType];
+            savedir = ['/media/ben/Manwe/phd/lever_task/' modelType '/results/Only120Trials/' scoreType];
         otherwise
             error('System hostname not recognized')
     end
