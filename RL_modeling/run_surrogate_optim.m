@@ -11,7 +11,7 @@ fullANS = true;
 
 N_RUNS = 2000;
 
-[statys,SYSTEM_NAME] = system('hostname');
+[status,SYSTEM_NAME] = system('hostname');
 if (~status)
     switch strtrim(SYSTEM_NAME)
         case 'silmaril'
