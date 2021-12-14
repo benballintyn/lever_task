@@ -39,19 +39,6 @@ if (p.Results.fullANS)
 end
 savedir = [savedir '/optimized/'];
 
-
-[status,SYSTEM_NAME] = system('hostname');
-if (~status)
-    switch strtrim(SYSTEM_NAME)
-        case 'silmaril'
-            mouseDataLoadDir = '/home/ben/phd/lever_task/cluster_code';
-        case 'hpcc.brandeis.edu'
-            mouseDataLoadDir = '/work/bbal/lever_task/';
-    end
-else
-    error('System hostname not recognized')
-end
-
 runParams.agentType = p.Results.agentType;
 runParams.actionSelectionMethod = p.Results.actionSelectionMethod;
 runParams.utilityFunc1 = p.Results.utilityFunc1;
