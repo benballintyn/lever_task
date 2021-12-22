@@ -14,6 +14,7 @@ addRequired(p,'basedir',@ischar)
 addParameter(p,'driftType','value_based_drift',@ischar)
 addParameter(p,'Only120Trials',false,@islogical)
 addParameter(p,'fullANS',false,@islogical)
+addParameter(p,'noAbortANS',false,@islogical)
 parse(p,agentType,actionSelectionMethod,utilityFunc1,utilityFunc2,initializationMethod,...
     forgettingType,scoreType,modelType,basedir,varargin{:})
 
@@ -56,6 +57,8 @@ runParams.scoreType = p.Results.scoreType;
 runParams.modelType = p.Results.modelType;
 runParams.Only120Trials = p.Results.Only120Trials;
 runParams.driftType = p.Results.driftType;
+runParams.fullANS = p.Results.fullANS;
+runParams.noAbortANS = p.Results.noAbortANS;
 runParams.savedir = savedir;
 runParams.randomSeed = cputime;
 rng(runParams.randomSeed)
@@ -101,7 +104,7 @@ parfor i=1:N_SAMPLES_PER_PARAM^N_PARAMS
     
     [score] = run_param_set(params,savedir,agentType,actionSelectionMethod,...
         initializationMethod,utilityFunc1,utilityFunc2,forgettingType,scoreType,...
-        modelType,i,'Only120Trials',Only120Trials,'driftType',driftType,'fullANS',p.Results.fullANS);
+        modelType,i,'Only120Trials',Only120Trials,'driftType',driftType,'fullANS',p.Results.fullANS,'noAbortANS',p.Results.noAbortANS);
     
     scores(i) = score;
 end

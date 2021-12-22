@@ -5,9 +5,11 @@ utilityFunc2 = '';
 initializationMethod = 'mean_reward';
 forgettingType = 'decayToInitialValues';
 scoreType = 'logprob_joint';
-modelType = 'logisticAbortRL';
+modelType = 'driftRL';
+driftType = 'value_based_drift';
 Only120Trials = true;
 fullANS = true;
+noAbortANS = true;
 
 N_RUNS = 2000;
 
@@ -21,6 +23,10 @@ if (~status)
         otherwise
             error('System hostname not recognized')
     end
+end
+
+if (strcmp(modelType,'driftRL'))
+    savedir = [savedir '/' driftType];
 end
 
 [xmin] = lever_task_surrogate_optim(agentType,actionSelectionMethod,...

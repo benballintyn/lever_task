@@ -23,6 +23,7 @@ addRequired(p,'run_num',@isnumeric)
 addParameter(p,'driftType','value_based_drift',@ischar)
 addParameter(p,'Only120Trials',false,@islogical)
 addParameter(p,'fullANS',false,@islogical)
+addParameter(p,'noAbortANS',false,@islogical)
 parse(p,params,basedir,agentType,actionSelectionMethod,initializationMethod,...
     utilityFunc1,utilityFunc2,forgettingType,scoreType,modelType,run_num,varargin{:})
 
@@ -240,7 +241,7 @@ for s=1:4
                         actionSelectionMethod,agentParams,logisticParams,...
                         'utilityFunc1',uf1,'utilityFunc2',uf2,'initializationMethod',initializationMethod,...
                         'forgettingType',forgettingType,'forgettingParams',forgettingParams,...
-                        'Only120Trials',p.Results.Only120Trials,'fullANS',p.Results.fullANS);
+                        'Only120Trials',p.Results.Only120Trials,'fullANS',p.Results.fullANS,'noAbortANS',p.Results.noAbortANS);
             end
             nS{s} = nS{s} + curnS;
             nL{s} = nL{s} + curnL;
@@ -286,7 +287,7 @@ for s=1:4
                         actionSelectionMethod,agentParams,logisticParams,...
                         'utilityFunc1',uf1,'utilityFunc2',uf2,'initializationMethod',initializationMethod,...
                         'forgettingType',forgettingType,'forgettingParams',forgettingParams,...
-                        'Only120Trials',p.Results.Only120Trials,'fullANS',p.Results.fullANS);
+                        'Only120Trials',p.Results.Only120Trials,'fullANS',p.Results.fullANS,'noAbortANS',p.Results.noAbortANS);
             end
             nS{s} = nS{s} + curnS;
             nL{s} = nL{s} + curnL;

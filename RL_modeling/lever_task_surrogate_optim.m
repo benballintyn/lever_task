@@ -15,6 +15,7 @@ addRequired(p,'maxFunEvals',@isnumeric)
 addParameter(p,'driftType','value_based_drift',@ischar)
 addParameter(p,'Only120Trials',false,@islogical)
 addParameter(p,'fullANS',false,@islogical)
+addParameter(p,'noAbortANS',false,@islogical)
 parse(p,agentType,actionSelectionMethod,utilityFunc1,utilityFunc2,initializationMethod,...
     forgettingType,scoreType,modelType,basedir,maxFunEvals,varargin{:})
 
@@ -46,6 +47,11 @@ runParams.utilityFunc2 = p.Results.utilityFunc2;
 runParams.initializationMethod = p.Results.initializationMethod;
 runParams.forgettingType = p.Results.forgettingType;
 runParams.scoreType = p.Results.scoreType;
+runParams.modelType = p.Results.modelType;
+runParams.driftType = p.Results.driftType;
+runParams.Only120Trials = p.Results.Only120Trials;
+runParams.fullANS = p.Results.fullANS;
+runParams.noAbortANS = p.Results.noAbortANS;
 runParams.savedir = savedir;
 runParams.randomSeed = cputime;
 if (p.Results.fullANS)
@@ -90,7 +96,7 @@ end
 
 f = @(x) lever_task_surrogate_optim_inner_loop(x,savedir,agentType,actionSelectionMethod,...
             initializationMethod,utilityFunc1,utilityFunc2,forgettingType,scoreType,p.Results.modelType,...
-            'Only120Trials',p.Results.Only120Trials,'driftType',p.Results.driftType,'fullANS',p.Results.fullANS);
+            'Only120Trials',p.Results.Only120Trials,'driftType',p.Results.driftType,'fullANS',p.Results.fullANS,'noAbortANS',p.Results.noAbortANS);
 xmin = surrogateopt(f,lb,ub,options);
 end
 

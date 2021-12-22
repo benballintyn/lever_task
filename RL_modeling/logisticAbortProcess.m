@@ -1,4 +1,4 @@
-function [hitBound,boundcross] = logisticAbortProcess(Qcur,Qalt,req,logisticParams,ansFunc,useFullANS,ansSigma)
+function [hitBound,boundcross] = logisticAbortProcess(Qcur,Qalt,req,logisticParams,ansFunc,useFullANS,ansSigma,noAbortANS)
 hitBound = 0;
 boundcross = nan;
 f = @(Qcur,Qalt,temp,offset) 1 - 1/(1 + exp(-(Qcur - Qalt + offset)/temp));
@@ -11,7 +11,7 @@ if (r <= pAbort)
 else
     Qs(1) = Qcur;
     for i=2:req
-        if (useFullANS)
+        if (useFullANS & ~noAbortANS)
             Qs(i) = Qs(i-1) + Qs(i-1)/(req - ansFunc(i,ansSigma) + 1);
         else
             Qs(i) = Qs(i-1) + Qs(i-1)/(req - i + 1);

@@ -26,6 +26,7 @@ addParameter(p,'forgettingType','none',@ischar)
 addParameter(p,'forgettingParams',[],@isnumeric)
 addParameter(p,'Only120Trials',false,@islogical)
 addParameter(p,'fullANS',false,@islogical)
+addParameter(p,'noAbortANS',false,@islogical)
 addParameter(p,'recordQ',false,@islogical)
 parse(p,sessionType,nTrials,agentType,nAgents,actionSelectionMethod,agentParams,logisticParams,varargin{:})
 
@@ -171,9 +172,9 @@ for i=1:nAgents
         % to cost)
         if (action == 1) % if chose action 1 (SR side)
             if (p.Results.fullANS)
-                [hitBound,abortInd] = logisticAbortProcess(Q(1),Q(2),Ps,logisticParams,ansFunc,p.Results.fullANS,agentParams.ans_sigma);
+                [hitBound,abortInd] = logisticAbortProcess(Q(1),Q(2),Ps,logisticParams,ansFunc,p.Results.fullANS,agentParams.ans_sigma,p.Results.noAbortANS);
             else
-                [hitBound,abortInd] = logisticAbortProcess(Q(1),Q(2),Ps,logisticParams,ansFunc,false,nan);
+                [hitBound,abortInd] = logisticAbortProcess(Q(1),Q(2),Ps,logisticParams,ansFunc,false,nan,p.Results.noAbortANS);
             end
             if (~hitBound)
                 if (p.Results.fullANS)
@@ -196,9 +197,9 @@ for i=1:nAgents
             nS(t) = nS(t) + 1;
         else % if chose action 2 (PR side)
             if (p.Results.fullANS)
-                [hitBound,abortInd] = logisticAbortProcess(Q(2),Q(1),Pl,logisticParams,ansFunc,p.Results.fullANS,agentParams.ans_sigma);
+                [hitBound,abortInd] = logisticAbortProcess(Q(2),Q(1),Pl,logisticParams,ansFunc,p.Results.fullANS,agentParams.ans_sigma,p.Results.noAbortANS);
             else
-                [hitBound,abortInd] = logisticAbortProcess(Q(2),Q(1),Pl,logisticParams,ansFunc,false,nan);
+                [hitBound,abortInd] = logisticAbortProcess(Q(2),Q(1),Pl,logisticParams,ansFunc,false,nan,p.Results.noAbortANS);
             end
             if (~hitBound)
                 r = ansFunc(LR,agentParams.ans_sigma)/denomsPR(Pl); %LR/utilityFunc2(utilityFuncValsPR(Pl));
