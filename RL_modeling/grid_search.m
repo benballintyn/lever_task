@@ -33,6 +33,9 @@ end
 if (p.Results.fullANS)
     savedir = [savedir '_fullANS'];
 end
+if (p.Results.noAbortANS)
+    savedir = [savedir '_noAbortANS'];
+end
 savedir = [savedir '/grid_search/'];
 
 [status,SYSTEM_NAME] = system('hostname');

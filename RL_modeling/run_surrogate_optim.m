@@ -5,7 +5,7 @@ utilityFunc2 = '';
 initializationMethod = 'mean_reward';
 forgettingType = 'decayToInitialValues';
 scoreType = 'logprob_joint';
-modelType = 'driftRL';
+modelType = 'logisticAbortRL';
 driftType = 'value_based_drift';
 Only120Trials = true;
 fullANS = true;
@@ -31,4 +31,4 @@ end
 
 [xmin] = lever_task_surrogate_optim(agentType,actionSelectionMethod,...
 utilityFunc1,utilityFunc2,initializationMethod,forgettingType,scoreType,modelType,...
-savedir,N_RUNS,'Only120Trials',Only120Trials,'fullANS',fullANS);
+savedir,N_RUNS,'Only120Trials',Only120Trials,'fullANS',fullANS,'noAbortANS',noAbortANS);
