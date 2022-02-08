@@ -1,5 +1,5 @@
 agentType = 'bandit';
-actionSelectionMethod = 'softmax';
+actionSelectionMethod = 'UCB';
 utilityFunc1 = 'ansUtilityFunc';
 utilityFunc2 = '';
 initializationMethod = 'mean_reward';
@@ -8,7 +8,7 @@ scoreType = 'logprob_joint';
 modelType = 'logisticAbortRL';
 driftType = 'value_based_drift';
 Only120Trials = true;
-fullANS = true;
+fullANS = false;
 noAbortANS = true;
 
 N_RUNS = 2000;

@@ -2,7 +2,7 @@ function [score] = lever_task_surrogate_optim_inner_loop(params,basedir,agentTyp
     actionSelectionMethod,initializationMethod,utilityFunc1,utilityFunc2,forgettingType,...
     scoreType,modelType,varargin)
 isValidAgentType = @(x) ismember(x,{'bandit','Qlearner'});
-isValidActionSelectionMethod = @(x) ismember(x,{'e_greedy','softmax'});
+isValidActionSelectionMethod = @(x) ismember(x,{'e_greedy','softmax','UCB'});
 isValidInitializationMethod = @(x) ismember(x,{'random','PR_biased','SR_biased','mean_reward','trained'});
 isValidUtilityFunc = @(x) ismember(x,{'','ansUtilityFunc','pressUtilityFunc'});
 isValidForgettingType = @(x) ismember(x,{'none','decayToInitialValues','decayToFreeParameter'});

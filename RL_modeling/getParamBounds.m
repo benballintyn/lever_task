@@ -1,6 +1,6 @@
 function [lb,ub,paramNames] = getParamBounds(agentType,actionSelectionMethod,utilityFuncs,forgettingType,modelType)
 isValidAgentType = @(x) ismember(x,{'bandit','Qlearner'});
-isValidActionSelectionMethod = @(x) ismember(x,{'e_greedy','softmax'});
+isValidActionSelectionMethod = @(x) ismember(x,{'e_greedy','softmax','UCB'});
 areValidUtilityFuncs = @(x) isempty(x) || (length(x) <= 2);
 isValidForgettingType = @(x) ismember(x,{'none','decayToInitialValues','decayToFreeParameter'});
 isValidModelType = @(x) ismember(x,{'driftRL','driftRL_valueUpdate','logisticAbortRL'});
