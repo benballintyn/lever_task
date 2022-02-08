@@ -1,6 +1,6 @@
 function [numSR,numLR,nS,nL,RoEoptimalities,EoRoptimalities,nSaborted,nLaborted,...
-    numAborted,percentCompletedPR,Qs] = logisticAbortRLsim(sessionType,nTrials,...
-    agentType,nAgents,actionSelectionMethod,agentParams,logisticParams,varargin)
+    numAborted,percentCompletedPR] = driftRLsim_valueUpdate(sessionType,nTrials,...
+    agentType,nAgents,actionSelectionMethod,agentParams,driftParams,driftType,varargin)
 RoE_NL_optimal = [70.875 286.875 448.875 1798.875]; % lever presses
 EoR_NL_optimal = [10 22 28 58]; % trials
 f_NL = @(N) .5*(sqrt(8*N+9)-3); % f(lever presses) = trials
@@ -18,7 +18,8 @@ addRequired(p,'agentType',@ischar) % currently: 'bandit' or 'Qlearner'
 addRequired(p,'nAgents',positiveNoInfCheck) % # of agents to simulate
 addRequired(p,'actionSelectionMethod',@ischar) % currently: 'e_greedy', 'softmax', or 'UCB'
 addRequired(p,'agentParams',@isstruct) % contains the parameters of the agent (alpha,gamma,epsilon/temp)
-addRequired(p,'logisticParams',@isstruct)
+addRequired(p,'driftParams',@isstruct)
+addRequired(p,'driftType',@ischar)
 addParameter(p,'utilityFunc1',@(x) x,isaFunc) % optional utility function to pass lever presses through
 addParameter(p,'utilityFunc2',@(x) x,isaFunc) % optional utility function to pass the results of utilityFunc1 through
 addParameter(p,'initializationMethod','random',@ischar)
@@ -26,16 +27,16 @@ addParameter(p,'forgettingType','none',@ischar)
 addParameter(p,'forgettingParams',[],@isnumeric)
 addParameter(p,'Only120Trials',false,@islogical)
 addParameter(p,'fullANS',false,@islogical)
-addParameter(p,'noAbortANS',false,@islogical)
-addParameter(p,'recordQ',false,@islogical)
-parse(p,sessionType,nTrials,agentType,nAgents,actionSelectionMethod,agentParams,logisticParams,varargin{:})
+parse(p,sessionType,nTrials,agentType,nAgents,actionSelectionMethod,agentParams,...
+    driftParams,driftType,varargin{:})
 
 if (p.Results.fullANS)
     if (~isfield(agentParams,'ans_sigma'))
         error('fullANS is selected but there is not ans_sigma parameter')
+    else
+        ansFunc = @(x,sigma) lognrnd(log(x) - (sigma^2)/2,sigma);
     end
 end
-ansFunc = @(x,sigma) lognrnd(log(x) - (sigma^2)/2,sigma);
 
 agentType = p.Results.agentType;
 actionSelectionMethod = p.Results.actionSelectionMethod;
@@ -52,37 +53,34 @@ switch agentType
     otherwise
         error('agentType not recognized')
 end
-switch actionSelectionMethod
+switch p.Results.actionSelectionMethod
     case 'e_greedy'
-        epsilon = agentParams.epsilon;
+        epsilon = p.Results.agentParams.epsilon;
     case 'softmax'
-        temp = agentParams.temp;
-    case 'UCB'
-        c = agentParams.c;
-        actionCount = zeros(1,2);
+        temp = p.Results.agentParams.temp;
     otherwise
         error('actionSelectionMethod not recognized')
 end
-switch forgettingType
+switch p.Results.forgettingType
     case 'none'
-        if (~isempty(forgettingParams))
+        if (~isempty(p.Results.forgettingParams))
             error('forgettingType is none but forgettingParams is not empty')
         end
         useForgetting = false;
     case 'decayToInitialValues'
-        if (length(forgettingParams) ~= 1)
-            error(['With forgettingType = decayToInitialValues, there should be 1 parameter but ' num2str(length(forgettingParams)) ' were given'])
+        if (length(p.Results.forgettingParams) ~= 1)
+            error(['With forgettingType = decayToInitialValues, there should be 1 parameter but ' num2str(length(p.Results.forgettingParams)) ' were given'])
         else
-            alphaF = forgettingParams(1);
+            alphaF = p.Results.forgettingParams(1);
             forgetTargetCoeff = 1;
         end
         useForgetting = true;
     case 'decayToFreeParameter'
-        if (length(forgettingParams) ~= 2)
-            error(['With forgettingType = decayToFreeParameter, there should be 2 parameters but ' num2str(length(forgettingParams)) ' were given'])
+        if (length(p.Results.forgettingParams) ~= 2)
+            error(['With forgettingType = decayToFreeParameter, there should be 2 parameters but ' num2str(length(p.Results.forgettingParams)) ' were given'])
         else
-            alphaF = forgettingParams(1);
-            forgetTargetCoeff = forgettingParams(2);
+            alphaF = p.Results.forgettingParams(1);
+            forgetTargetCoeff = p.Results.forgettingParams(2);
         end
         useForgetting = true;
     otherwise
@@ -123,6 +121,7 @@ else
     nSaborted = zeros(1,1000);
     nLaborted = zeros(1,1000);
 end
+
 for i=1:nAgents
     switch initializationMethod
         case 'random'
@@ -137,12 +136,6 @@ for i=1:nAgents
             Q = [SR/Ps LR/2];
         otherwise
             error('initializationMethod not recognized')
-    end
-    if (p.Results.recordQ)
-        Qs = nan(nTrials+1,2);
-        Qs(1,:) = Q;
-    else
-        Qs = nan(1,2);
     end
     initialQValues = Q;
     Pl = 2; % initialize PR side lever press cost
@@ -172,26 +165,16 @@ for i=1:nAgents
                 end
             case 'softmax'
                 [softVals,action] = mySoftmax(Q,temp);
-            case 'UCB'
-                actionsNotChosen = find(actionCount == 0);
-                if (length(actionsNotChosen) == 2)
-                    action = ceil(rand*2);
-                elseif (length(actionsNotChosen) == 1)
-                    action = actionsNotChosen;
-                else
-                    UCBvals = Q + c*sqrt(log(t)./actionCount);
-                    [~,action] = max(UCBvals);
-                end
-                actionCount(action) = actionCount(action) + 1;
         end
         actions(t) = action;
         % rewards r are the per-trial EoR (ratio of reward
         % to cost)
         if (action == 1) % if chose action 1 (SR side)
-            if (p.Results.fullANS)
-                [hitBound,abortInd] = logisticAbortProcess(Q(1),Q(2),Ps,logisticParams,ansFunc,p.Results.fullANS,agentParams.ans_sigma,p.Results.noAbortANS);
-            else
-                [hitBound,abortInd] = logisticAbortProcess(Q(1),Q(2),Ps,logisticParams,ansFunc,false,nan,p.Results.noAbortANS);
+            switch p.Results.driftType
+                case 'value_based_drift'
+                    [trajectory,hitBound,abortInd] = drift_valueUpdateProcess(Q(1),Q(2),driftParams.drift_rate,Ps,driftParams.noise_amplitude,0,10,Ps);
+                case 'value_based_start'
+                    [trajectory,hitBound,abortInd] = drift_valueUpdateProcess(Q(1),Q(2),driftParams.drift_rate,Ps,driftParams.noise_amplitude,-(Q(1)-Q(2)),10,Ps);
             end
             if (~hitBound)
                 if (p.Results.fullANS)
@@ -213,13 +196,18 @@ for i=1:nAgents
             end
             nS(t) = nS(t) + 1;
         else % if chose action 2 (PR side)
-            if (p.Results.fullANS)
-                [hitBound,abortInd] = logisticAbortProcess(Q(2),Q(1),Pl,logisticParams,ansFunc,p.Results.fullANS,agentParams.ans_sigma,p.Results.noAbortANS);
-            else
-                [hitBound,abortInd] = logisticAbortProcess(Q(2),Q(1),Pl,logisticParams,ansFunc,false,nan,p.Results.noAbortANS);
+            switch p.Results.driftType
+                case 'value_based_drift'
+                    [trajectory,hitBound,abortInd] = drift_valueUpdateProcess(Q(1),Q(2),driftParams.drift_rate,Pl,driftParams.noise_amplitude,0,10,Pl);
+                case 'value_based_start'
+                    [trajectory,hitBound,abortInd] = drift_valueUpdateProcess(Q(1),Q(2),driftParams.drift_rate,Pl,driftParams.noise_amplitude,-(Q(2)-Q(1)),10,Pl);
             end
             if (~hitBound)
-                r = ansFunc(LR,agentParams.ans_sigma)/denomsPR(Pl); %LR/utilityFunc2(utilityFuncValsPR(Pl));
+                if (p.Results.fullANS)
+                    r = ansFunc(LR,agentParams.ans_sigma)/denomsPR(Pl);
+                else
+                    r = LR/denomsPR(Pl); %LR/utilityFunc2(utilityFuncValsPR(Pl));
+                end
                 rewards(t) = LR;
                 nPresses = nPresses + Pl;
                 presses(t) = Pl;
@@ -248,9 +236,6 @@ for i=1:nAgents
         end
         if (useForgetting)
             Q(unchosenAction) = Q(unchosenAction) + alphaF*(forgetTargetCoeff*initialQValues(unchosenAction) - Q(unchosenAction));
-        end
-        if (p.Results.recordQ)
-            Qs(t+1,:) = Q;
         end
     end
     %curNumSR = sum(actions == 1);

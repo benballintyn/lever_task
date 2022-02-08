@@ -2,7 +2,7 @@ function [score] = run_param_set(params,basedir,agentType,...
     actionSelectionMethod,initializationMethod,utilityFunc1,utilityFunc2,forgettingType,...
     scoreType,modelType,run_num,varargin)
 isValidAgentType = @(x) ismember(x,{'bandit','Qlearner'});
-isValidActionSelectionMethod = @(x) ismember(x,{'e_greedy','softmax'});
+isValidActionSelectionMethod = @(x) ismember(x,{'e_greedy','softmax','UCB'});
 isValidInitializationMethod = @(x) ismember(x,{'random','PR_biased','SR_biased','mean_reward','trained'});
 isValidUtilityFunc = @(x) ismember(x,{'','ansUtilityFunc','pressUtilityFunc'});
 isValidForgettingType = @(x) ismember(x,{'none','decayToInitialValues','decayToFreeParameter'});
@@ -62,6 +62,8 @@ switch p.Results.agentType
                 agentParams.epsilon = params(2);
             case 'softmax'
                 agentParams.temp = params(2);
+            case 'UCB'
+                agentParams.c = params(2);
         end
         if (any(strcmp(utilityFuncs,'ansUtilityFunc')))
             agentParams.ans_sigma = params(3);
@@ -94,6 +96,8 @@ switch p.Results.agentType
                 agentParams.epsilon = params(3);
             case 'softmax'
                 agentParams.temp = params(3);
+            case 'UCB'
+                agentParams.c = params(3);
         end
         if (any(strcmp(utilityFuncs,'ansUtilityFunc')))
             agentParams.ans_sigma = params(4);

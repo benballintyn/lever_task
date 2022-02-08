@@ -24,6 +24,9 @@ switch p.Results.agentType
             case 'softmax'
                 lb(2) = 1e-12; ub(2) = 1; % temp - exploration rate
                 paramNames{2} = 'temperature';
+            case 'UCB'
+                lb(2) = 1e-12; ub(2) = 10; % c - exploration magnitude
+                paramNames{2} = 'c';
             otherwise
                 error(['Action selection method (' num2str(p.Results.actionSelectionMethod) ') not recognized'])
         end

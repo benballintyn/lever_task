@@ -16,7 +16,7 @@ addRequired(p,'sessionType',@ischar) % 2xFR6, 2xFR12, 5xFR6, 5xFR12
 addRequired(p,'nTrials',positiveNoInfCheck) %  # of trials to run per agent
 addRequired(p,'agentType',@ischar) % currently: 'bandit' or 'Qlearner'
 addRequired(p,'nAgents',positiveNoInfCheck) % # of agents to simulate
-addRequired(p,'actionSelectionMethod',@ischar) % currently: 'e_greedy' or 'softmax'
+addRequired(p,'actionSelectionMethod',@ischar) % currently: 'e_greedy', 'softmax', or 'UCB'
 addRequired(p,'agentParams',@isstruct) % contains the parameters of the agent (alpha,gamma,epsilon/temp)
 addRequired(p,'driftParams',@isstruct)
 addRequired(p,'driftType',@ischar)
@@ -41,44 +41,50 @@ end
 
 agentType = p.Results.agentType;
 actionSelectionMethod = p.Results.actionSelectionMethod;
+forgettingType = p.Results.forgettingType;
 sessionType = p.Results.sessionType;
-switch p.Results.agentType
+agentParams = p.Results.agentParams;
+forgettingParams = p.Results.forgettingParams;
+switch agentType
     case 'bandit'
-        alpha = p.Results.agentParams.alpha;
+        alpha = agentParams.alpha;
     case 'Qlearner'
-        alpha = p.Results.agentParams.alpha;
-        gamma = p.Results.agentParams.gamma;
+        alpha = agentParams.alpha;
+        gamma = agentParams.gamma;
     otherwise
         error('agentType not recognized')
 end
-switch p.Results.actionSelectionMethod
+switch actionSelectionMethod
     case 'e_greedy'
-        epsilon = p.Results.agentParams.epsilon;
+        epsilon = agentParams.epsilon;
     case 'softmax'
-        temp = p.Results.agentParams.temp;
+        temp = agentParams.temp;
+    case 'UCB'
+        c = agentParams.c;
+        actionCount = zeros(1,2);
     otherwise
         error('actionSelectionMethod not recognized')
 end
-switch p.Results.forgettingType
+switch forgettingType
     case 'none'
-        if (~isempty(p.Results.forgettingParams))
+        if (~isempty(forgettingParams))
             error('forgettingType is none but forgettingParams is not empty')
         end
         useForgetting = false;
     case 'decayToInitialValues'
-        if (length(p.Results.forgettingParams) ~= 1)
+        if (length(forgettingParams) ~= 1)
             error(['With forgettingType = decayToInitialValues, there should be 1 parameter but ' num2str(length(p.Results.forgettingParams)) ' were given'])
         else
-            alphaF = p.Results.forgettingParams(1);
+            alphaF = forgettingParams(1);
             forgetTargetCoeff = 1;
         end
         useForgetting = true;
     case 'decayToFreeParameter'
-        if (length(p.Results.forgettingParams) ~= 2)
-            error(['With forgettingType = decayToFreeParameter, there should be 2 parameters but ' num2str(length(p.Results.forgettingParams)) ' were given'])
+        if (length(forgettingParams) ~= 2)
+            error(['With forgettingType = decayToFreeParameter, there should be 2 parameters but ' num2str(length(forgettingParams)) ' were given'])
         else
-            alphaF = p.Results.forgettingParams(1);
-            forgetTargetCoeff = p.Results.forgettingParams(2);
+            alphaF = forgettingParams(1);
+            forgetTargetCoeff = forgettingParams(2);
         end
         useForgetting = true;
     otherwise
@@ -168,6 +174,17 @@ for i=1:nAgents
                 end
             case 'softmax'
                 [softVals,action] = mySoftmax(Q,temp);
+            case 'UCB'
+                actionsNotChosen = find(actionCount == 0);
+                if (length(actionsNotChosen) == 2)
+                    action = ceil(rand*2);
+                elseif (length(actionsNotChosen) == 1)
+                    action = actionsNotChosen;
+                else
+                    UCBvals = Q + c*sqrt(log(t)./actionCount);
+                    [~,action] = max(UCBvals);
+                end
+                actionCount(action) = actionCount(action) + 1;
         end
         actions(t) = action;
         % rewards r are the per-trial EoR (ratio of reward
