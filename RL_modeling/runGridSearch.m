@@ -1,6 +1,6 @@
 % runGridSearch
 agentType = 'bandit';
-actionSelectionMethod = 'softmax';
+actionSelectionMethod = 'UCB';
 utilityFunc1 = 'ansUtilityFunc';
 utilityFunc2 = '';
 initializationMethod = 'mean_reward';
@@ -9,7 +9,7 @@ scoreType = 'logprob_joint';
 modelType = 'logisticAbortRL';
 useOnly120Trials = true;
 driftType = 'value_based_drift';
-useFullANS = true;
+useFullANS = false;
 noAbortANS = true;
 
 savedir = ['/media/ben/Manwe/phd/lever_task/' modelType '/results/Only120Trials/' scoreType];

@@ -106,7 +106,7 @@ end
 %% Aborted trials analysis
 sessionTypes = {'2xFR6','2xFR12','5xFR6','5xFR12'};
 nTrialsAborted = load('optimality/WT/nTrialsAborted.mat'); nTrialsAborted=nTrialsAborted.nTrialsAborted;
-nTrialsCompleted = load('optimality/WT/nTrialsCompleted.mat'); nTrialsCompleted=nTrialsCompleted.nTrialsCompleted
+nTrialsCompleted = load('optimality/WT/nTrialsCompleted.mat'); nTrialsCompleted=nTrialsCompleted.nTrialsCompleted;
 fracTrialsAborted = cell(1,4);
 for i=1:4
     for j=1:length(nTrialsCompleted{i})

@@ -219,7 +219,11 @@ for i=1:nAgents
                 [hitBound,abortInd] = logisticAbortProcess(Q(2),Q(1),Pl,logisticParams,ansFunc,false,nan,p.Results.noAbortANS);
             end
             if (~hitBound)
-                r = ansFunc(LR,agentParams.ans_sigma)/denomsPR(Pl); %LR/utilityFunc2(utilityFuncValsPR(Pl));
+                if (p.Results.fullANS)
+                    r = ansFunc(LR,agentParams.ans_sigma)/denomsPR(Pl); %LR/utilityFunc2(utilityFuncValsPR(Pl));
+                else
+                    r = LR/denomsPR(Pl);
+                end
                 rewards(t) = LR;
                 nPresses = nPresses + Pl;
                 presses(t) = Pl;

@@ -1,6 +1,7 @@
 %% MODELING PAPER FIGURES
+clear all;
 BASE_DIR = '~/phd/lever_task/publication/modeling/';
-FIGURE_DIR = [BASE_DIR 'figures/v1/'];
+FIGURE_DIR = [BASE_DIR 'figures/thesis/'];
 DATA_DIR = [BASE_DIR 'data_files/'];
 if (~exist(BASE_DIR,'dir'))
     mkdir(BASE_DIR)
@@ -36,6 +37,7 @@ if (useOnly120Trials)
     driftSimDataDirs{2} = 'bandit_softmax_ansUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues';
     driftSimDataDirs{3} = 'bandit_softmax_pressUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues';
     driftSimDataDirs{4} = 'bandit_softmax_initialization_mean_reward_forgettingType_decayToInitialValues';
+    driftSimDataDirs{5} = 'bandit_UCB_ansUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues_noAbortANS';
 else
     driftRLDir = [externalDataDir 'driftRL/results/logprob_joint/value_based_drift/'];
     driftSimDataDirs{1} = 'bandit_softmax_ansUtilityFunc_pressUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues';
@@ -47,10 +49,12 @@ end
 
 if (useOnly120Trials)
     logisticRLDir = [externalDataDir 'logisticAbortRL/results/Only120Trials/logprob_joint/'];
-    logisticSimDataDirs{1} = 'bandit_softmax_ansUtilityFunc_pressUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues';
-    logisticSimDataDirs{2} = 'bandit_softmax_ansUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues';
-    logisticSimDataDirs{3} = 'bandit_softmax_pressUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues';
-    logisticSimDataDirs{4} = 'bandit_softmax_initialization_mean_reward_forgettingType_decayToInitialValues';
+    logisticSimDataDirs{1} = 'bandit_softmax_ansUtilityFunc_pressUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues_noAbortANS';
+    logisticSimDataDirs{2} = 'bandit_softmax_ansUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues_noAbortANS';
+    logisticSimDataDirs{3} = 'bandit_softmax_pressUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues_noAbortANS';
+    logisticSimDataDirs{4} = 'bandit_softmax_initialization_mean_reward_forgettingType_decayToInitialValues_noAbortANS';
+    logisticSimDataDirs{5} = 'bandit_UCB_ansUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues_noAbortANS';
+    logisticSimDataDirs{6} = 'bandit_e_greedy_ansUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues_noAbortANS';
 else
     logisticRLDir = [externalDataDir 'logisticAbortRL/results/logprob_joint/'];
     logisticSimDataDirs{1} = 'bandit_softmax_ansUtilityFunc_pressUtilityFunc_initialization_mean_reward_forgettingType_decayToInitialValues';
@@ -134,7 +138,7 @@ saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
 print([FIGURE_DIR figName '.png'],'-dpng','-r600')
 
 % Best logisticRL agent
-[scores,allParams] = getScores(logisticRLDirs{2},'useSave',true);
+[scores,allParams] = getScores(logisticRLDirs{2});
 [~,minInd] = min(scores);
 pS = load([logisticRLDirs{2} '/' num2str(minInd) '/pS.mat']); pS=pS.pS;
 pL = load([logisticRLDirs{2} '/' num2str(minInd) '/pL.mat']); pL=pL.pL;
@@ -227,7 +231,7 @@ for i=1:length(mice)
                     abort_countFR{sessInd}(abortPress) = abort_countFR{sessInd}(abortPress) + 1;
                     total_countFR{sessInd}(1:abortPress) = total_countFR{sessInd}(1:abortPress) + 1;
                     
-                    dataMatrix(:,count) = [data{j}.SideChosen(k); isnan(data{j}.SideRewarded(k)); data{j}.LeverPressesByTrial(k); abortPress/pressRequirement; relativeValue; sessInd; pressRequirement; k; j];
+                    dataMatrix(:,count) = [data{j}.SideChosen(k); isnan(data{j}.SideRewarded(k)); data{j}.LeverPressesByTrial(k); abortPress/pressRequirement; relativeValue; sessInd; pressRequirement; k; j; data{j}.Reward_L/data{j}.NumPressRequired_L(k); data{j}.Reward_S/data{j}.NumPressRequired_S];
                 elseif (data{j}.SideChosen(k) == 1)
                     abortPress = data{j}.LeverPressesByTrial(k);
                     pressRequirement = data{j}.NumPressRequired_L(k);
@@ -239,7 +243,7 @@ for i=1:length(mice)
                     abort_countPR{sessInd}(pressRequirement,abortPress) = abort_countPR{sessInd}(pressRequirement,abortPress) + 1;
                     total_countPR{sessInd}(pressRequirement,1:abortPress) = total_countPR{sessInd}(pressRequirement,1:abortPress) + 1;
                     
-                    dataMatrix(:,count) = [data{j}.SideChosen(k); isnan(data{j}.SideRewarded(k)); data{j}.LeverPressesByTrial(k); abortPress/pressRequirement; relativeValue; sessInd; pressRequirement; k; j];
+                    dataMatrix(:,count) = [data{j}.SideChosen(k); isnan(data{j}.SideRewarded(k)); data{j}.LeverPressesByTrial(k); abortPress/pressRequirement; relativeValue; sessInd; pressRequirement; k; j; data{j}.Reward_L/data{j}.NumPressRequired_L(k); data{j}.Reward_S/data{j}.NumPressRequired_S];
                 elseif (isnan(data{j}.SideChosen(k)))
                     continue;
                 else
@@ -252,14 +256,14 @@ for i=1:length(mice)
                     total_countFR_all(FRind,1:pressRequirement) = total_countFR_all(FRind,1:pressRequirement) + 1;
                     total_countFR{sessInd} = total_countFR{sessInd} + 1;
                     
-                    dataMatrix(:,count) = [data{j}.SideChosen(k); isnan(data{j}.SideRewarded(k)); data{j}.LeverPressesByTrial(k); 1; relativeValue; sessInd; pressRequirement; k; j];
+                    dataMatrix(:,count) = [data{j}.SideChosen(k); isnan(data{j}.SideRewarded(k)); data{j}.LeverPressesByTrial(k); 1; relativeValue; sessInd; pressRequirement; k; j; data{j}.Reward_L/data{j}.NumPressRequired_L(k); data{j}.Reward_S/data{j}.NumPressRequired_S];
                 elseif (data{j}.SideChosen(k) == 1)
                     pressRequirement = data{j}.NumPressRequired_L(k);
                     
                     total_countPR_all(pressRequirement,1:pressRequirement) = total_countPR_all(pressRequirement,1:pressRequirement) + 1;
                     total_countPR{sessInd}(pressRequirement,1:pressRequirement) = total_countPR{sessInd}(pressRequirement,1:pressRequirement) + 1;
                     
-                    dataMatrix(:,count) = [data{j}.SideChosen(k); isnan(data{j}.SideRewarded(k)); data{j}.LeverPressesByTrial(k); 1; relativeValue; sessInd; pressRequirement; k; j];
+                    dataMatrix(:,count) = [data{j}.SideChosen(k); isnan(data{j}.SideRewarded(k)); data{j}.LeverPressesByTrial(k); 1; relativeValue; sessInd; pressRequirement; k; j; data{j}.Reward_L/data{j}.NumPressRequired_L(k); data{j}.Reward_S/data{j}.NumPressRequired_S];
                 elseif (isnan(data{j}.SideChosen(k)))
                     continue;
                 else
@@ -271,7 +275,7 @@ for i=1:length(mice)
     end
 end
 
-dataTable = array2table(dataMatrix','VariableNames',{'SideChosen','WasAborted','LeverPressesByTrial','FracCompleted','RelativeValue','SessionIndex','PressRequirment','TrialNum','DayIndex'});
+dataTable = array2table(dataMatrix','VariableNames',{'SideChosen','WasAborted','LeverPressesByTrial','FracCompleted','RelativeValue','SessionIndex','PressRequirment','TrialNum','DayIndex', 'PRvalue', 'FRvalue'});
 dataTable.mouseNames = mouseNames';
 
 Pabort_PR_all = abort_countPR_all./total_countPR_all;
@@ -303,21 +307,27 @@ end
 
 PRtrials = dataTable.SideChosen == 1;
 NaNinds = isnan(fracAborted);
-ft = fittype('1 - 1/(1 + exp(-A*x)) + B');
-F = fit(meanbins(~NaNinds)',fracAborted(~NaNinds)',ft);
-Fall = fit(dataTable.RelativeValue(PRtrials),dataTable.WasAborted(PRtrials),ft);
-f = @(x,A,B) 1 - 1./(1 + exp(-A*x)) + B;
+%ft = fittype(' - 1/(1 + exp(-A*x)) + B');
+%F = fit(meanbins(~NaNinds)',fracAborted(~NaNinds)',ft);
+f = @(beta,x) 1 - beta(1) - (beta(2) - beta(1))./(beta(3) + exp(-beta(4)*(x - beta(5))));
+beta0 = [0 1 1 1 0];
+%NLM = fitnlm(meanbins(~NaNinds),fracAborted(~NaNinds),f,beta0);
+NLM = fitnlm(dataTable.RelativeValue(PRtrials),dataTable.WasAborted(PRtrials),f,beta0);
+%Fall = fit(dataTable.RelativeValue(PRtrials),dataTable.WasAborted(PRtrials),ft);
+%f = @(x,A,B) 1 - 1./(1 + exp(-A*x)) + B;
 x = -1:.001:5;
 figure;
-elim_whitespace
-scatter(meanbins,fracAborted,'.'); 
+%elim_whitespace
+scatter(meanbins,fracAborted,100,'k.'); 
 hold on;
 %plot(x,f(x,F.A,F.B))
-plot(x,f(x,Fall.A,Fall.B))
+%plot(x,f(x,Fall.A,Fall.B))
+plot(x,NLM.predict(x'))
+
 legend({'Binned data',...
-       ['logistic: \beta = ' num2str(Fall.A) ' , offset = ' num2str(Fall.B)]},'fontsize',20,'fontweight','bold')
-xlabel('Relative value (PR - FR)')
-ylabel('Fraction of trials aborted')
+       ['logistic']},'fontsize',20,'fontweight','bold')
+xlabel('Relative value (PR - FR)','FontSize',20,'FontWeight','bold')
+ylabel('Fraction of trials aborted','FontSize',20,'FontWeight','bold')
 set(gcf,'Position',[10 10 1600 1200])
 figName = 'fig3A_fracAborted_vs_relativeValue';
 saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
@@ -386,30 +396,235 @@ while (~oneHitBound && count <= 100)
     count=count+1;
 end
 
-%% Fig 4A Best fit drift RL stats with Weber-Fechner
+%% Fig 4A % PR trial completed for mice and model - DDM
+[scores,allParams] = plotResults(driftRLDirs{2},1,'Only120Trials',true,'PercentAbortedOnly',true);
+figName = 'fig4A_driftRL_percent_PR_completed';
+saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
+saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
+print([FIGURE_DIR figName '.png'],'-dpng','-r600')
+
+%% Fig 4B % PR trial completed for mice and model - Logistic
+[scores,allParams] = plotResults(logisticRLDirs{2},1,'Only120Trials',true,'PercentAbortedOnly',true);
+figName = 'fig4B_logisticRL_percent_PR_completed';
+saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
+saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
+print([FIGURE_DIR figName '.png'],'-dpng','-r600')
+
+%% Fig 5A Best fit drift RL stats with Weber-Fechner
 [scores,allParams] = plotResults(driftRLDirs{2},1,'fitStatsOnly',true,'Only120Trials',true);
-figName = 'fig4A_driftRL_WF_bestFit';
+figName = 'fig5A_driftRL_WF_bestFit';
 saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
 saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
 print([FIGURE_DIR figName '.png'],'-dpng','-r600')
 
-%% Fig4B Best fit driftRL stats without Weber-Fechner
+%% Fig5B Best fit driftRL stats without Weber-Fechner
 [scores,allParams] = plotResults(driftRLDirs{4},1,'fitStatsOnly',true,'Only120Trials',true);
-figName = 'fig4B_driftRL_noWF_bestFit';
+figName = 'fig5B_driftRL_noWF_bestFit';
 saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
 saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
 print([FIGURE_DIR figName '.png'],'-dpng','-r600')
 
-%% Fig 5A Best fit logisticAbortRL stats with Weber-Fechner
+%% Fig 6A Best fit logisticAbortRL stats with Weber-Fechner
 [scores,allParams] = plotResults(logisticRLDirs{2},1,'fitStatsOnly',true,'Only120Trials',true);
-figName = 'fig5A_logisticAbortRL_WF_bestFit';
+figName = 'fig6A_logisticAbortRL_WF_bestFit';
 saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
 saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
 print([FIGURE_DIR figName '.png'],'-dpng','-r600')
 
-%% Fig 5B Best fit logisticAbortRL stats without Weber-Fechner
+%% Fig 6B Best fit logisticAbortRL stats without Weber-Fechner
 [scores,allParams] = plotResults(logisticRLDirs{4},1,'fitStatsOnly',true,'Only120Trials',true);
-figName = 'fig5B_logisticAbortRL_WF_bestFit';
+figName = 'fig6B_logisticAbortRL_noWF_bestFit';
 saveas(gcf,[FIGURE_DIR figName '.fig'],'fig')
 saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
 print([FIGURE_DIR figName '.png'],'-dpng','-r600')
+
+%% Fig 7A model comparison (w/w.o. WF)
+BICs = [];
+nDataPoints = 160;
+
+% Model comparison of w/w.o WF
+% Load scores of best driftRL w WF
+dirInd = 2;
+[scores,allParams] = getScores(driftRLDirs{dirInd});
+[~,minInd] = min(scores);
+params = load([driftRLDirs{dirInd} '/' num2str(minInd) '/params.mat']); params=params.params;
+curBIC = length(params)*log(nDataPoints) + 2*scores(minInd);
+BICs = [BICs curBIC];
+
+% Load scores of best driftRL w.o WF
+dirInd = 4;
+[scores,allParams] = getScores(driftRLDirs{dirInd});
+[~,minInd] = min(scores);
+params = load([driftRLDirs{dirInd} '/' num2str(minInd) '/params.mat']); params=params.params;
+curBIC = length(params)*log(nDataPoints) + 2*scores(minInd);
+BICs = [BICs curBIC];
+
+% Load scores of best logisticAbortRL w WF
+dirInd = 2;
+[scores,allParams] = getScores(logisticRLDirs{dirInd});
+[~,minInd] = min(scores);
+params = load([logisticRLDirs{dirInd} '/' num2str(minInd) '/params.mat']); params=params.params;
+curBIC = length(params)*log(nDataPoints) + 2*scores(minInd);
+BICs = [BICs curBIC];
+
+% Load scores of best logisticAbortRL w WF
+dirInd = 4;
+[scores,allParams] = getScores(logisticRLDirs{dirInd});
+[~,minInd] = min(scores);
+params = load([logisticRLDirs{dirInd} '/' num2str(minInd) '/params.mat']); params=params.params;
+curBIC = length(params)*log(nDataPoints) + 2*scores(minInd);
+BICs = [BICs curBIC];
+
+xtick = [1:2 4:5];
+xticklabels = {'DDM','DDM WF-','LOG(\tau)','LOG(\tau) WF-'};
+figure;
+elim_whitespace
+bar(xtick,BICs)
+set(gca,'xtick',xtick,'xticklabels',xticklabels,'fontsize',12,'fontweight','bold')
+set(gcf,'Position',[10 10 1800 800])
+ylabel('BIC','fontsize',20,'fontweight','bold')
+figName = 'fig7A_BIC_with_without_WF';
+saveas(gcf,[FIGURE_DIR '/' figName '.fig'],'fig')
+saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
+print([FIGURE_DIR '/' figName '.png'],'-dpng','-r600')
+
+%% Fig 7B logistic vs. drift
+BICs = [];
+nDataPoints = 160;
+
+% Load scores of best driftRL w WF
+dirInd = 2;
+[scores,allParams] = getScores(driftRLDirs{dirInd});
+[~,minInd] = min(scores);
+params = load([driftRLDirs{dirInd} '/' num2str(minInd) '/params.mat']); params=params.params;
+curBIC = length(params)*log(nDataPoints) + 2*scores(minInd);
+BICs = [BICs curBIC];
+
+% Load scores of best driftRL w WF
+dirInd = 5;
+[scores,allParams] = getScores(driftRLDirs{dirInd});
+[~,minInd] = min(scores);
+params = load([driftRLDirs{dirInd} '/' num2str(minInd) '/params.mat']); params=params.params;
+curBIC = length(params)*log(nDataPoints) + 2*scores(minInd);
+BICs = [BICs curBIC];
+
+% Load scores of best logisticAbortRL w WF
+dirInd = 2;
+[scores,allParams] = getScores(logisticRLDirs{dirInd});
+[~,minInd] = min(scores);
+params = load([logisticRLDirs{dirInd} '/' num2str(minInd) '/params.mat']); params=params.params;
+curBIC = length(params)*log(nDataPoints) + 2*scores(minInd);
+BICs = [BICs curBIC];
+
+% Load scores of best logisticAbortRL w WF
+dirInd = 5;
+[scores,allParams] = getScores(logisticRLDirs{dirInd});
+[~,minInd] = min(scores);
+params = load([logisticRLDirs{dirInd} '/' num2str(minInd) '/params.mat']); params=params.params;
+curBIC = length(params)*log(nDataPoints) + 2*scores(minInd);
+BICs = [BICs curBIC];
+
+%{
+% Load scores of best logisticAbortRL w WF
+dirInd = 6;
+[scores,allParams] = getScores(logisticRLDirs{dirInd});
+[~,minInd] = min(scores);
+params = load([logisticRLDirs{dirInd} '/' num2str(minInd) '/params.mat']); params=params.params;
+curBIC = length(params)*log(nDataPoints) + 2*scores(minInd);
+BICs = [BICs curBIC];
+%}
+
+%xtick = [1:2 4:6];
+xtick = [1:2 4:5];
+%xticklabels = {'DDM(\tau)','DDM(UCB)','LOG(\tau)','LOG(UCB)','LOG(\epsilon)'};
+xticklabels = {'DDM(\tau)','DDM(UCB)','LOG(\tau)','LOG(UCB)'};
+figure;
+%elim_whitespace
+bar(xtick,BICs - (min(BICs) - 10))
+set(gca,'xtick',xtick,'xticklabels',xticklabels,'fontsize',20,'fontweight','bold')
+ticks=get(gca,'YTick');%retrieve current ticks
+ticks=ceil(ticks + min(BICs) - 10); % add back actual BIC values
+%ticks=cellfun(@num2str,ticks,'UniformOutput',false);%convert to cellstr
+set(gca,'YTickLabels',ticks)%set new tick labels
+set(gcf,'Position',[10 10 1800 800])
+ylabel('BIC','fontsize',20,'fontweight','bold')
+figName = 'fig7B_BIC_DDM_v_LOG';
+saveas(gcf,[FIGURE_DIR '/' figName '.fig'],'fig')
+saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
+print([FIGURE_DIR '/' figName '.png'],'-dpng','-r600')
+
+%% Alternative Fig 7B (using boxplots of multiple BICs)
+BICs = zeros(20,5);
+data_dir = 'publication/modeling/data_files/';
+
+[scores,allParams] = getScores([data_dir 'DDM_' driftSimDataDirs{2}]);
+BICs(:,1) = scores';
+
+[scores,allParams] = getScores([data_dir 'DDM_' driftSimDataDirs{5}]);
+BICs(:,2) = scores';
+
+[scores,allParams] = getScores([data_dir 'logistic_' logisticSimDataDirs{2}]);
+BICs(:,3) = scores';
+
+[scores,allParams] = getScores([data_dir 'logistic_' logisticSimDataDirs{5}]);
+BICs(:,4) = scores';
+
+[scores,allParams] = getScores([data_dir 'logistic_' logisticSimDataDirs{6}]);
+BICs(:,5) = scores';
+
+xticklabels = {'DDM(\tau)','DDM(UCB)','LOG(\tau)','LOG(UCB)','LOG(\epsilon)'};
+figure;
+notBoxPlot(BICs)
+ylabel('BIC','FontSize',20,'FontWeight','bold')
+set(gca,'xticklabels',xticklabels,'FontSize',20,'FontWeight','bold')
+set(gcf,'Position',[10 10 1200 1000])
+
+%% Fig 8 - matching law
+sideChoices = dataTable.SideChosen;
+relativeValues = dataTable.RelativeValue;
+PRvalues = dataTable.PRvalue;
+FRvalues = dataTable.FRvalue;
+valRatios = PRvalues./FRvalues;
+PRvalFrac = PRvalues./(PRvalues + FRvalues);
+lowVal = 0;
+binWidth = .01;
+maxVal = 1;
+bins_L = lowVal:binWidth:(maxVal-binWidth);
+bins_U = (lowVal+binWidth):binWidth:maxVal;
+mid_bins = mean([bins_L; bins_U],1);
+nbins = length(mid_bins);
+pPR = zeros(1,nbins);
+ratioPRFR = zeros(1,nbins);
+for i=1:nbins
+    relValInds = find(PRvalFrac >= bins_L(i) & PRvalFrac < bins_U(i));
+    if (isempty(relValInds))
+        pPR(i) = nan;
+    else
+        pPR(i) = sum(sideChoices(relValInds))/length(relValInds);
+    end
+    ratioPRFR(i) = pPR(i)/(1-pPR(i));
+    
+end
+
+fn = @(b,x) b(4) + b(3)./(1 + exp(-b(1)*(x - b(2))));
+beta0 = [1 .5 .5 0];
+NLM = fitnlm(PRvalFrac,sideChoices,fn,beta0);
+NLM2 = fitnlm(mid_bins,pPR,fn,beta0);
+
+x = lowVal:binWidth:maxVal;
+x2 = lowVal:(maxVal-lowVal)/1000:maxVal;
+figure;
+
+scatter(mid_bins,pPR,100,'k.')
+hold on; plot(x,x)
+%plot(x2,NLM.predict(x2'))
+plot(x2,NLM2.predict(x2'))
+xlabel('EoR_{PR} / (EoR_{PR} + EoR_{FR})','FontSize',20,'FontWeight','bold')
+ylabel('P(PR)','FontSize',20,'FontWeight','bold')
+legend({'data','Matching law','logistic fit'},'location','northwest','FontSize',20,'FontWeight','bold')
+set(gcf,'Position',[10 10 1000 800])
+figName = 'fig8_matching_law';
+saveas(gcf,[FIGURE_DIR '/' figName '.fig'],'fig')
+saveas(gcf,[FIGURE_DIR figName '.eps'],'epsc')
+print([FIGURE_DIR '/' figName '.png'],'-dpng','-r600')
+
