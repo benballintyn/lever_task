@@ -6,5 +6,11 @@ switch varname
     case 'run_num'
         run_num = savevar;
         save(fname,'run_num','-mat')
+    case 'nS'
+        nS = savevar;
+        save(fname,'nS','-mat')
+    case 'nL'
+        nL = savevar;
+        save(fname,'nL','-mat')
 end
 

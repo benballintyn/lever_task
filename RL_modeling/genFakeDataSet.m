@@ -6,21 +6,23 @@ isValidInitializationMethod = @(x) ismember(x,{'random','PR_biased','SR_biased',
 isValidUtilityFunc = @(x) ismember(x,{'','ansUtilityFunc','pressUtilityFunc'});
 isValidForgettingType = @(x) ismember(x,{'none','decayToInitialValues','decayToFreeParameter'});
 isValidModelType = @(x) ismember(x,{'driftRL','driftRL_valueUpdate','logisticAbortRL'});
+isValidAgentType = @(x) ismember(x,{'bandit','Qlearner'});
 p = inputParser;
 addRequired(p,'SAVE_DIR',@ischar)
-addRequired(p,'agentType',isValidAgentType)
+addRequired(p,'modelType',isValidModelType)
 addRequired(p,'actionSelectionMethod',isValidActionSelectionMethod)
-addRequired(p,'initializationMethod',isValidInitializationMethod)
 addRequired(p,'utilityFunc1',isValidUtilityFunc)
 addRequired(p,'utilityFunc2',isValidUtilityFunc)
+addRequired(p,'initializationMethod',isValidInitializationMethod)
 addRequired(p,'forgettingType',isValidForgettingType)
-addRequired(p,'modelType',isValidModelType)
 addParameter(p,'driftType','value_based_drift',@ischar)
 addParameter(p,'fullANS',false,@islogical)
 addParameter(p,'noAbortANS',false,@islogical)
 addParameter(p,'nParamSets',10,@isnumeric)
-parse(p,SAVE_DIR,modelType,actionSelectionMethod,initializationMethod,...
-    utilityFunc1,utilityFunc2,forgettingType,varargin{:})
+addParameter(p,'agentType','bandit',isValidAgentType)
+addParameter(p,'Only120Trials',true,@islogical)
+parse(p,SAVE_DIR,modelType,actionSelectionMethod,utilityFunc1,utilityFunc2,...
+    initializationMethod,forgettingType,varargin{:})
 
 if (~exist(SAVE_DIR,'dir'))
     mkdir(SAVE_DIR)
@@ -29,7 +31,7 @@ end
 utilityFuncs = {utilityFunc1,utilityFunc2};
 
 % Loop over number of parameter sets to test
-for i = 1:p.Results.nParamSets
+parfor i = 1:p.Results.nParamSets
     % Make directory for current parameter set runs
     CUR_SAVE_DIR = [SAVE_DIR '/' num2str(i)];
     mkdir(CUR_SAVE_DIR)
@@ -128,6 +130,18 @@ for i = 1:p.Results.nParamSets
     end
     
     %=================BEGIN SIMULATION====================================%
+    performanceEoR = cell(1,4); % Fraction of max EoR values
+    performanceRoE = cell(1,4);
+    nL = cell(1,4); % # of choices of PR side for each timestep
+    nS = cell(1,4); % # of choices of SR side for each timestep
+    nSaborted = cell(1,4);
+    nLaborted = cell(1,4);
+    numAborted = cell(1,4);
+    percentCompletedPR = cell(1,4);
+    pL = cell(1,4); % P(PR) for each timestep. computed from nL and nS
+    pS = cell(1,4); % P(SR) for each timestep. computed from nL and nS
+    numLR = cell(1,4); % Total # of PR trials
+    numSR = cell(1,4); % Total # of SR trials
     for s=1:4
         switch s
             case 1 % 2xFR6
@@ -150,7 +164,7 @@ for i = 1:p.Results.nParamSets
                 case 'driftRL'
                     [curnumSR,curnumLR,curnS,curnL,RoEoptimalities,EoRoptimalities,...
                     curnSaborted,curnLaborted,curNumAborted,curPercentCompletedPR] = ...
-                        driftRLsim(sessType,120,agentType,100,...
+                        driftRLsim(sessType,120,p.Results.agentType,100,...
                         actionSelectionMethod,agentParams,driftParams,p.Results.driftType,...
                         'utilityFunc1',uf1,'utilityFunc2',uf2,'initializationMethod',initializationMethod,...
                         'forgettingType',forgettingType,'forgettingParams',forgettingParams,...
@@ -158,7 +172,7 @@ for i = 1:p.Results.nParamSets
                 case 'driftRL_valueUpdate'
                     [curnumSR,curnumLR,curnS,curnL,RoEoptimalities,EoRoptimalities,...
                     curnSaborted,curnLaborted,curNumAborted,curPercentCompletedPR] = ...
-                        driftRLsim_valueUpdate(sessType,120,agentType,100,...
+                        driftRLsim_valueUpdate(sessType,120,p.Results.agentType,100,...
                         actionSelectionMethod,agentParams,driftParams,p.Results.driftType,...
                         'utilityFunc1',uf1,'utilityFunc2',uf2,'initializationMethod',initializationMethod,...
                         'forgettingType',forgettingType,'forgettingParams',forgettingParams,...
@@ -166,7 +180,7 @@ for i = 1:p.Results.nParamSets
                 case 'logisticAbortRL'
                     [curnumSR,curnumLR,curnS,curnL,RoEoptimalities,EoRoptimalities,...
                     curnSaborted,curnLaborted,curNumAborted,curPercentCompletedPR] = ...
-                        logisticAbortRLsim(sessType,120,agentType,100,...
+                        logisticAbortRLsim(sessType,120,p.Results.agentType,100,...
                         actionSelectionMethod,agentParams,logisticParams,...
                         'utilityFunc1',uf1,'utilityFunc2',uf2,'initializationMethod',initializationMethod,...
                         'forgettingType',forgettingType,'forgettingParams',forgettingParams,...
@@ -198,6 +212,8 @@ for i = 1:p.Results.nParamSets
     save([CUR_SAVE_DIR '/performanceRoE.mat'],'performanceRoE','-mat')
     save([CUR_SAVE_DIR '/pS.mat'],'pS','-mat')
     save([CUR_SAVE_DIR '/pL.mat'],'pL','-mat')
+    save([CUR_SAVE_DIR '/params.mat'],'params','-mat')
+    save([CUR_SAVE_DIR '/paramNames.mat'],'paramNames','-mat')
 end
 
 end
@@ -209,6 +225,6 @@ function [params,paramNames] = genParamSet(modelType,actionSelectionMethod,...
 utilityFuncs,forgettingType,modelType);
 
 for i=1:length(lb)
-    params(i) = rand*(ub - lb) + lb;
+    params(i) = rand*(ub(i) - lb(i)) + lb(i);
 end
 end
