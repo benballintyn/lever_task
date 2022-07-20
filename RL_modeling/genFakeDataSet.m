@@ -39,58 +39,13 @@ parfor i = 1:p.Results.nParamSets
     % Generate parameter set
     [params,paramNames] = genParamSet(modelType,actionSelectionMethod,...
                             utilityFuncs,forgettingType);
-    % Parse parameters
-    agentParams.alpha = params(1);
-    switch actionSelectionMethod
-        case 'e_greedy'
-            agentParams.epsilon = params(2);
-        case 'softmax'
-            agentParams.temp = params(2);
-        case 'UCB'
-            agentParams.c = params(2);
-    end
-    if (any(strcmp(utilityFuncs,'ansUtilityFunc')))
-        agentParams.ans_sigma = params(3);
-        if (any(strcmp(p.Results.modelType,{'driftRL','driftRL_valueUpdate'})))
-            driftParams.drift_rate = params(4);
-            driftParams.noise_amplitude = params(5);
-        elseif (strcmp(p.Results.modelType,'logisticAbortRL'))
-            logisticParams.temp = params(4);
-            logisticParams.offset = params(5);
-        else
-            error('modelType not recognized')
-        end
-        nextParamInd = 6;
-    else
-        if (any(strcmp(p.Results.modelType,{'driftRL','driftRL_valueUpdate'})))
-            driftParams.drift_rate = params(3);
-            driftParams.noise_amplitude = params(4);
-        elseif (strcmp(p.Results.modelType,'logisticAbortRL'))
-            logisticParams.temp = params(3);
-            logisticParams.offset = params(4);
-        else
-            error('modelType not recognized')
-        end
-        nextParamInd = 5;
-    end
-    switch p.Results.forgettingType
-        case 'none'
-            if (length(params) > 6)
-                error('Without forgetting, there should be at most 6 parameters')
-            end
-        case 'decayToInitialValues'
-            forgettingParams = [params(nextParamInd)];
-            if (length(params) > nextParamInd)
-                error('There are extra parameters ???')
-            end
-        case 'decayToFreeParameter'
-            forgettingParams = [params(nextParamInd:(nextParamInd+1))];
-            if (length(params) > (nextParamInd+1))
-                error('There are extra parameters ???')
-            end
-        otherwise
-            error('forgettingType not recognized')
-    end
+    
+    % Parse parameters into agent and abortModel param structs
+    [agentParams,abortModelParams,forgettingParams] = getParamStructs(modelType,...
+                                                                      params,...
+                                                                      actionSelectionMethod,...
+                                                                      utilityFuncs,...
+                                                                      forgettingType)
     % Set up utility functions
     %  Utility function based on press times (effort)
     if (any(strcmp(utilityFuncs,'pressUtilityFunc')))
@@ -165,7 +120,7 @@ parfor i = 1:p.Results.nParamSets
                     [curnumSR,curnumLR,curnS,curnL,RoEoptimalities,EoRoptimalities,...
                     curnSaborted,curnLaborted,curNumAborted,curPercentCompletedPR] = ...
                         driftRLsim(sessType,120,p.Results.agentType,100,...
-                        actionSelectionMethod,agentParams,driftParams,p.Results.driftType,...
+                        actionSelectionMethod,agentParams,abortModelParams,p.Results.driftType,...
                         'utilityFunc1',uf1,'utilityFunc2',uf2,'initializationMethod',initializationMethod,...
                         'forgettingType',forgettingType,'forgettingParams',forgettingParams,...
                         'Only120Trials',p.Results.Only120Trials,'fullANS',p.Results.fullANS);
@@ -173,7 +128,7 @@ parfor i = 1:p.Results.nParamSets
                     [curnumSR,curnumLR,curnS,curnL,RoEoptimalities,EoRoptimalities,...
                     curnSaborted,curnLaborted,curNumAborted,curPercentCompletedPR] = ...
                         driftRLsim_valueUpdate(sessType,120,p.Results.agentType,100,...
-                        actionSelectionMethod,agentParams,driftParams,p.Results.driftType,...
+                        actionSelectionMethod,agentParams,abortModelParams,p.Results.driftType,...
                         'utilityFunc1',uf1,'utilityFunc2',uf2,'initializationMethod',initializationMethod,...
                         'forgettingType',forgettingType,'forgettingParams',forgettingParams,...
                         'Only120Trials',p.Results.Only120Trials,'fullANS',p.Results.fullANS);
@@ -181,7 +136,7 @@ parfor i = 1:p.Results.nParamSets
                     [curnumSR,curnumLR,curnS,curnL,RoEoptimalities,EoRoptimalities,...
                     curnSaborted,curnLaborted,curNumAborted,curPercentCompletedPR] = ...
                         logisticAbortRLsim(sessType,120,p.Results.agentType,100,...
-                        actionSelectionMethod,agentParams,logisticParams,...
+                        actionSelectionMethod,agentParams,abortModelParams,...
                         'utilityFunc1',uf1,'utilityFunc2',uf2,'initializationMethod',initializationMethod,...
                         'forgettingType',forgettingType,'forgettingParams',forgettingParams,...
                         'Only120Trials',p.Results.Only120Trials,'fullANS',p.Results.fullANS,'noAbortANS',p.Results.noAbortANS);
@@ -200,20 +155,20 @@ parfor i = 1:p.Results.nParamSets
         pS{s} = nS{s}./(nS{s} + nL{s});
         pL{s} = nL{s}./(nS{s} + nL{s});
     end
-    save([CUR_SAVE_DIR '/nS.mat'],'nS','-mat')
-    save([CUR_SAVE_DIR '/nL.mat'],'nL','-mat')
-    save([CUR_SAVE_DIR '/nSaborted.mat'],'nSaborted','-mat')
-    save([CUR_SAVE_DIR '/nLaborted.mat'],'nLaborted','-mat')
-    save([CUR_SAVE_DIR '/numAborted.mat'],'numAborted','-mat')
-    save([CUR_SAVE_DIR '/numSR.mat'],'numSR','-mat')
-    save([CUR_SAVE_DIR '/numLR.mat'],'numLR','-mat')
-    save([CUR_SAVE_DIR '/percentCompletedPR.mat'],'percentCompletedPR','-mat')
-    save([CUR_SAVE_DIR '/performanceEoR.mat'],'performanceEoR','-mat')
-    save([CUR_SAVE_DIR '/performanceRoE.mat'],'performanceRoE','-mat')
-    save([CUR_SAVE_DIR '/pS.mat'],'pS','-mat')
-    save([CUR_SAVE_DIR '/pL.mat'],'pL','-mat')
-    save([CUR_SAVE_DIR '/params.mat'],'params','-mat')
-    save([CUR_SAVE_DIR '/paramNames.mat'],'paramNames','-mat')
+    parsave([CUR_SAVE_DIR '/nS.mat'],nS)
+    parsave([CUR_SAVE_DIR '/nL.mat'],nL)
+    parsave([CUR_SAVE_DIR '/nSaborted.mat'],nSaborted)
+    parsave([CUR_SAVE_DIR '/nLaborted.mat'],nLaborted)
+    parsave([CUR_SAVE_DIR '/numAborted.mat'],numAborted)
+    parsave([CUR_SAVE_DIR '/numSR.mat'],numSR)
+    parsave([CUR_SAVE_DIR '/numLR.mat'],numLR)
+    parsave([CUR_SAVE_DIR '/percentCompletedPR.mat'],percentCompletedPR)
+    parsave([CUR_SAVE_DIR '/performanceEoR.mat'],performanceEoR)
+    parsave([CUR_SAVE_DIR '/performanceRoE.mat'],performanceRoE)
+    parsave([CUR_SAVE_DIR '/pS.mat'],pS)
+    parsave([CUR_SAVE_DIR '/pL.mat'],pL)
+    parsave([CUR_SAVE_DIR '/params.mat'],params)
+    parsave([CUR_SAVE_DIR '/paramNames.mat'],paramNames)
 end
 
 end
