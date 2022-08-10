@@ -1,0 +1,93 @@
+function [xmin] = fitFakeData(agentType,actionSelectionMethod,...
+    utilityFunc1,utilityFunc2,initializationMethod,forgettingType,...
+    modelType,basedir,maxFunEvals,fakeDataDir,varargin)
+p = inputParser;
+addRequired(p,'agentType',@ischar)
+addRequired(p,'actionSelectionMethod',@ischar)
+addRequired(p,'utilityFunc1',@ischar)
+addRequired(p,'utilityFunc2',@ischar)
+addRequired(p,'initializationMethod',@ischar)
+addRequired(p,'forgettingType',@ischar)
+addRequired(p,'modelType',@ischar)
+addRequired(p,'basedir',@ischar)
+addRequired(p,'maxFunEvals',@isnumeric)
+addRequired(p,'fakeDataDir',@ischar)
+addParameter(p,'driftType','value_based_drift',@ischar)
+addParameter(p,'fullANS',false,@islogical)
+addParameter(p,'noAbortANS',false,@islogical)
+parse(p,agentType,actionSelectionMethod,utilityFunc1,utilityFunc2,initializationMethod,...
+    forgettingType,modelType,basedir,maxFunEvals,fakeDataDir,varargin{:})
+
+if (~any(strcmp({p.Results.utilityFunc1,p.Results.utilityFunc2},'ansUtilityFunc')) && p.Results.fullANS)
+    error('If fullANS == true, one of the utility functions must be ansUtilityFunc')
+end
+
+if (~exist(basedir,'dir'))
+    mkdir(basedir);
+end
+
+curModelSpec = genModelSpecStr(p.Results.agentType,p.Results.actionSelectionMethod,...
+    p.Results.utilityFunc1,p.Results.utilityFunc2,p.Results.initializationMethod,...
+    p.Results.forgettingType,p.Results.fullANS,p.Results.noAbortANS);
+
+savedir = [basedir '/' curModelSpec '/optimized/'];
+
+runParams.agentType = p.Results.agentType;
+runParams.actionSelectionMethod = p.Results.actionSelectionMethod;
+runParams.utilityFunc1 = p.Results.utilityFunc1;
+runParams.utilityFunc2 = p.Results.utilityFunc2;
+runParams.initializationMethod = p.Results.initializationMethod;
+runParams.forgettingType = p.Results.forgettingType;
+runParams.modelType = p.Results.modelType;
+runParams.driftType = p.Results.driftType;
+runParams.fullANS = p.Results.fullANS;
+runParams.noAbortANS = p.Results.noAbortANS;
+runParams.savedir = savedir;
+runParams.randomSeed = cputime;
+if (p.Results.fullANS)
+    runParams.fullANS = true;
+else
+    runParams.fullANS = false;
+end
+rng(runParams.randomSeed)
+
+utilityFuncs = {utilityFunc1,utilityFunc2};
+[lb,ub,paramNames] = getParamBounds(p.Results.agentType,p.Results.actionSelectionMethod,...
+utilityFuncs,p.Results.forgettingType,p.Results.modelType);
+
+runParams.paramNames = paramNames;
+runParams.lower_bounds = lb;
+runParams.upper_bounds = ub;
+
+if (~exist(runParams.savedir,'dir'))
+    mkdir(runParams.savedir)
+    run_num = 0;
+    save([runParams.savedir '/run_num.mat'],'run_num','-mat')
+    save([runParams.savedir '/runParams.mat'],'runParams','-mat')
+else
+    run_num = load([runParams.savedir '/run_num.mat']); run_num = run_num.run_num;
+end
+
+if (run_num >= 1)
+    disp([num2str(run_num) ' prior runs detected'])
+    for i=1:run_num
+        curdir = [runParams.savedir '/' num2str(i)];
+        params = load([curdir '/params.mat']); params=params.params;
+        initialPoints.X(i,:) = params;
+        objective_score = load([curdir '/objective_score.mat']); objective_score=objective_score.score;
+        initialPoints.Fval(i) = objective_score;
+    end
+    options=optimoptions('surrogateopt','InitialPoints',initialPoints,'MaxFunctionEvaluations',maxFunEvals,'PlotFcn','surrogateoptplot','UseParallel',true);
+    %options=optimoptions('surrogateopt','InitialPoints',initialPoints,'MaxFunctionEvaluations',maxFunEvals,'PlotFcn','surrogateoptplot','UseParallel',false);
+else
+    disp('No initial points')
+    options=optimoptions('surrogateopt','MaxFunctionEvaluations',maxFunEvals,'PlotFcn','surrogateoptplot','UseParallel',true);
+    %options=optimoptions('surrogateopt','MaxFunctionEvaluations',maxFunEvals,'PlotFcn','surrogateoptplot','UseParallel',false);
+end
+
+f = @(x) fitFakeData_inner_loop(x,savedir,agentType,actionSelectionMethod,...
+            initializationMethod,utilityFunc1,utilityFunc2,forgettingType,p.Results.modelType,fakeDataDir,...
+            'driftType',p.Results.driftType,'fullANS',p.Results.fullANS,'noAbortANS',p.Results.noAbortANS);
+xmin = surrogateopt(f,lb,ub,options);
+end
+
